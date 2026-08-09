@@ -1,6 +1,6 @@
 import type { BasesPropertyId } from 'obsidian';
 
-export const SOURCE_PATH_ATTRIBUTE = 'data-mark-base-playground-source-path';
+export const SOURCE_PATH_ATTRIBUTE = 'data-mark-base-source-path';
 
 export interface OrderedEntryProperty {
 	propertyId: BasesPropertyId;

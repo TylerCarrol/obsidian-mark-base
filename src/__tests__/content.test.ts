@@ -79,6 +79,8 @@ describe('resolvePropertyOrder', () => {
 
 describe('getInternalLinkTarget', () => {
 	it('reads the rendered link and its entry source path', () => {
+		expect(SOURCE_PATH_ATTRIBUTE).toBe('data-mark-base-source-path');
+
 		const entryEl = document.createElement('div');
 		entryEl.setAttribute(SOURCE_PATH_ATTRIBUTE, 'People/Ada.md');
 		const linkEl = entryEl.appendChild(document.createElement('a'));

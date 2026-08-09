@@ -33,8 +33,8 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 	},
 ];
 
-export function registerFreeformView(plugin: Plugin): boolean {
-	return plugin.registerBasesView(FREEFORM_VIEW_TYPE, {
+export function registerFreeformView(plugin: Plugin): void {
+	plugin.registerBasesView(FREEFORM_VIEW_TYPE, {
 		name: 'Freeform',
 		icon: 'file-text',
 		factory: (controller, containerEl) =>

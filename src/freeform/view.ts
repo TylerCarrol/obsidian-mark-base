@@ -37,7 +37,7 @@ export class FreeformView extends BasesView {
 		super(controller);
 		this.rootEl = parentEl.createDiv({
 			cls: [
-				'mark-base-playground-freeform',
+				'mark-base-freeform',
 				'markdown-rendered',
 				'markdown-preview-view',
 			],
@@ -123,7 +123,7 @@ export class FreeformView extends BasesView {
 
 		if (entries.length === 0) {
 			this.rootEl.createDiv({
-				cls: 'mark-base-playground-freeform__message',
+				cls: 'mark-base-freeform__message',
 				text: 'No notes match this Base.',
 			});
 			return;
@@ -175,7 +175,7 @@ export class FreeformView extends BasesView {
 			return value?.toString() ?? '';
 		});
 		const entryEl = this.rootEl.createDiv({
-			cls: 'mark-base-playground-freeform__entry',
+			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
 
@@ -202,7 +202,7 @@ export class FreeformView extends BasesView {
 			this.getLineSeparator(),
 		);
 		const entryEl = this.rootEl.createDiv({
-			cls: 'mark-base-playground-freeform__entry',
+			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
 
@@ -225,7 +225,7 @@ export class FreeformView extends BasesView {
 		renderComponent: Component,
 	): Promise<void> {
 		const separatorEl = this.rootEl.createDiv({
-			cls: 'mark-base-playground-freeform__separator',
+			cls: 'mark-base-freeform__separator',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
 
@@ -301,7 +301,7 @@ export class FreeformView extends BasesView {
 	private showMessage(message: string): void {
 		this.resetSurface();
 		this.rootEl.createDiv({
-			cls: 'mark-base-playground-freeform__message',
+			cls: 'mark-base-freeform__message',
 			text: message,
 		});
 	}

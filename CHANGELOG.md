@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Removed unused sample settings code and simplified plugin startup.
+- Updated the README with clearer usage and development instructions.
+
+### Fixed
+
+- Aligned Freeform view class names and data attributes with the plugin styles.
+
 ## [0.1.0] - 2026-08-09
 
 ### Added
