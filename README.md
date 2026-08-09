@@ -2,6 +2,19 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/TylerCarrol/obsidian-mark-base?logo=github&sort=semver)](https://github.com/TylerCarrol/obsidian-mark-base/releases/latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/TylerCarrol/obsidian-mark-base/blob/main/LICENSE) [![Lint](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml) [![Test](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml)
 
+MarkBase adds a **Freeform** view to Obsidian Bases. It renders the visible
+properties and formulas for every query result as one continuous Markdown
+document.
+
+## Features
+
+- Render selected note properties, file properties, and formulas as Markdown.
+- Control rendered content and its sequence with the Base properties menu.
+- Follow internal links and select rendered text for copying.
+- Add a multiline Markdown separator between results, or leave it empty.
+- Optionally override the property layout with a reusable Markdown template.
+- Run entirely inside the vault without network requests.
+
 ## Requirements
 
 - Obsidian 1.13.0 or later.
@@ -23,6 +36,41 @@ Each selected value is rendered as Markdown, in property-menu order. Single
 newlines in multiline formula values remain visible. `file.name` is rendered as
 a link to its note. Changes to matching notes, formulas, property order, and
 view options update the view automatically.
+
+### Use a template override
+
+For a fixed custom layout, create a Markdown file and add placeholders using
+full Bases property IDs:
+
+   ```markdown
+   # [[{{file.path}}|{{note.title}}]]
+
+   {{formula.summary}}
+   ```
+
+Then select it under **Configure view → Template override**. The template is
+repeated for every result. Because the template explicitly controls placement,
+its placeholder order takes precedence over the Base properties menu. Clear
+**Template override** to return to property-order rendering. In template mode,
+the line separator setting is ignored because the template provides the layout.
+
+The view replaces these placeholder forms before rendering:
+
+| Placeholder | Value |
+| --- | --- |
+| `{{note.property}}` | A property from the note's frontmatter |
+| `{{file.property}}` | A built-in file property such as `file.name` or `file.path` |
+| `{{formula.name}}` | A formula defined in the current Base |
+
+Whitespace inside braces is optional. Missing values render as empty text.
+Unsupported placeholders remain unchanged. Formula expressions must be defined
+in the Base first; the template references their `formula.name`.
+
+Each result is rendered relative to its source note, so relative links and
+embeds resolve in that note's context. Template edits are reflected
+automatically. MarkBase does not add labels, italics, callouts, or other
+formatting; those come only from property values or an explicitly selected
+template.
 
 ## Demo vault
 

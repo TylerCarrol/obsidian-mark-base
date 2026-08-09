@@ -1,0 +1,36 @@
+filters:
+  and:
+    - file.inFolder("People")
+formulas:
+  Title: '"# " + link(file.name)'
+  Byline: '"> *" + note.role + "* · " + note.location'
+  Years: '"**Years:** " + note.born + " - " + note.died'
+  Focus: '"**Known for:** " + note.focus'
+  Summary: '"> [!abstract]- Snapshot\n> " + note.summary'
+  Quote: '"> [!quote]\n> " + note.quote'
+views:
+  - type: freeform
+    name: Profiles (Properties)
+    order:
+      - formula.Title
+      - formula.Byline
+      - formula.Years
+      - formula.Focus
+      - formula.Summary
+      - formula.Quote
+    separator: ---
+    lineSeparator: \n\n
+    template: ""
+  - type: freeform
+    name: Profiles (Template)
+    order: []
+    separator: ---
+    template: Templates/Person profile.md
+  - type: freeform
+    name: Single profile (this note)
+    filters:
+      and:
+        - file == this.file
+    order: []
+    separator: ""
+    template: Templates/Person profile.md

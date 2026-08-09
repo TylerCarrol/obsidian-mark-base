@@ -1,0 +1,39 @@
+.mark-base-freeform {
+	min-width: 0;
+	padding: var(--size-4-4);
+	-webkit-user-select: text;
+	user-select: text;
+}
+
+.mark-base-freeform__entry,
+.mark-base-freeform__separator {
+	min-width: 0;
+}
+
+.mark-base-freeform__entry > :first-child,
+.mark-base-freeform__separator > :first-child {
+	margin-block-start: 0;
+}
+
+.mark-base-freeform__entry > :last-child,
+.mark-base-freeform__separator > :last-child {
+	margin-block-end: 0;
+}
+
+.mark-base-freeform__separator {
+	white-space: pre-line;
+}
+
+.mark-base-freeform .callout + .callout {
+	margin-block-start: var(--size-4-4);
+}
+
+.mark-base-freeform__separator {
+	margin-block: var(--size-4-6);
+}
+
+.mark-base-freeform__message {
+	padding: var(--size-4-8) var(--size-4-4);
+	color: var(--text-muted);
+	text-align: center;
+}
