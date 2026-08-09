@@ -2,7 +2,7 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/TylerCarrol/obsidian-mark-base?logo=github&sort=semver)](https://github.com/TylerCarrol/obsidian-mark-base/releases/latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/TylerCarrol/obsidian-mark-base/blob/main/LICENSE) [![Lint](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml) [![Test](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml)
 
-MarkBase adds a **Freeform** view to Obsidian Bases. It renders the visible
+MarkBase combines **Markdown** and **Obsidian Bases** into one **Freeform** view. Rendering the visible
 properties and formulas for every query result as one continuous Markdown
 document.
 
@@ -14,6 +14,11 @@ document.
 - Add a multiline Markdown separator between results, or leave it empty.
 - Optionally override the property layout with a reusable Markdown template.
 - Run entirely inside the vault without network requests.
+
+## Examples
+
+![Freeform Example](./images/freeform-example-1.png)
+![Embedded Example](./images/freeform-example-2-embedded.png)
 
 ## Requirements
 
