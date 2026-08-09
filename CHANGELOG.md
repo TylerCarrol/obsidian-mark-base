@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-09
+
 ### Changed
 
 - Removed unused sample settings code and simplified plugin startup.
@@ -23,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Freeform Bases view with Markdown templates, property and formula
   placeholders, configurable separators, and demo vault content.
 
-[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.2.0...HEAD
+
+[0.2.0]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.1.0...v0.2.0
 
 [0.1.0]: https://github.com/TylerCarrol/obsidian-mark-base/releases/tag/v0.1.0
