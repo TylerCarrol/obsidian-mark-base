@@ -1,6 +1,6 @@
 {
 	"name": "mark-base",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "MarkBase plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"type": "module",
