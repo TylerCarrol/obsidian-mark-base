@@ -1,6 +1,7 @@
 import type { BasesPropertyId } from 'obsidian';
 
 export const SOURCE_PATH_ATTRIBUTE = 'data-mark-base-source-path';
+export const FILE_CONTENTS_PROPERTY_ID: BasesPropertyId = 'file.contents';
 
 export interface OrderedEntryProperty {
 	propertyId: BasesPropertyId;
@@ -14,6 +15,20 @@ export interface InternalLinkTarget {
 
 export function expandEscapedNewlines(markdown: string): string {
 	return markdown.replaceAll('\\n', '\n');
+}
+
+export function extractMarkdownBody(fileContent: string): string {
+	return fileContent.replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, '');
+}
+
+export function includeFileContentsProperty(
+	properties: BasesPropertyId[],
+): BasesPropertyId[] {
+	if (properties.includes(FILE_CONTENTS_PROPERTY_ID)) {
+		return properties;
+	}
+
+	return [...properties, FILE_CONTENTS_PROPERTY_ID];
 }
 
 export function buildOrderedEntryMarkdown(

@@ -3,7 +3,10 @@ import {
 	buildOrderedEntryMarkdown,
 	escapeLeadingFrontmatter,
 	expandEscapedNewlines,
+	extractMarkdownBody,
+	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
+	includeFileContentsProperty,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
 } from '../freeform/content';
@@ -14,6 +17,33 @@ describe('expandEscapedNewlines', () => {
 			'---\nNext',
 		);
 		expect(expandEscapedNewlines('---\nNext')).toBe('---\nNext');
+	});
+});
+
+describe('extractMarkdownBody', () => {
+	it('removes YAML frontmatter from a Markdown file', () => {
+		expect(
+			extractMarkdownBody('---\ntitle: Example\ntags:\n  - draft\n---\n\n# Body'),
+		).toBe('\n# Body');
+	});
+
+	it('preserves content when the file has no frontmatter', () => {
+		expect(extractMarkdownBody('# Body\n\nText')).toBe('# Body\n\nText');
+	});
+});
+
+describe('includeFileContentsProperty', () => {
+	it('adds file.contents to the available properties once', () => {
+		expect(includeFileContentsProperty(['file.name'])).toEqual([
+			'file.name',
+			FILE_CONTENTS_PROPERTY_ID,
+		]);
+		expect(
+			includeFileContentsProperty([
+				'file.name',
+				FILE_CONTENTS_PROPERTY_ID,
+			]),
+		).toEqual(['file.name', FILE_CONTENTS_PROPERTY_ID]);
 	});
 });
 

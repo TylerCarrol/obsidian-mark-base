@@ -13,6 +13,7 @@ document.
 - Control rendered content and its sequence with the Base properties menu.
 - Follow internal links and select rendered text for copying.
 - Add a multiline Markdown separator between results, or leave it empty.
+- Place each note's Markdown body anywhere in the property order.
 - Optionally override the property layout with a reusable Markdown template.
 - Run entirely inside the vault without network requests.
 
@@ -37,6 +38,8 @@ document.
 4. Open **Configure view → File separator** to set the Markdown placed between
    results. Enter `\n` for a new line, such as `---\n\n---`, or clear the
    option to join results without a separator.
+5. Open the Base properties menu, add `file.contents`, and drag it to where the
+   note's Markdown body should render. YAML frontmatter is omitted.
 
 Each selected value is rendered as Markdown, in property-menu order. Single
 newlines in multiline formula values remain visible. `file.name` is rendered as
@@ -52,6 +55,8 @@ full Bases property IDs:
    # [[{{file.path}}|{{note.title}}]]
 
    {{formula.summary}}
+
+   {{file.contents}}
    ```
 
 Then select it under **Configure view → Template override**. The template is
@@ -66,11 +71,18 @@ The view replaces these placeholder forms before rendering:
 | --- | --- |
 | `{{note.property}}` | A property from the note's frontmatter |
 | `{{file.property}}` | A built-in file property such as `file.name` or `file.path` |
+| `{{file.contents}}` | The note's Markdown body, excluding YAML frontmatter |
 | `{{formula.name}}` | A formula defined in the current Base |
 
 Whitespace inside braces is optional. Missing values render as empty text.
 Unsupported placeholders remain unchanged. Formula expressions must be defined
 in the Base first; the template references their `formula.name`.
+
+In template mode, place `{{file.contents}}` where the note body should appear.
+
+`file.contents` is provided by the Freeform view, not the Bases formula engine.
+Obsidian currently does not expose an API for plugins to add file properties to
+formula evaluation, so it cannot be referenced from a Base formula.
 
 Each result is rendered relative to its source note, so relative links and
 embeds resolve in that note's context. Template edits are reflected

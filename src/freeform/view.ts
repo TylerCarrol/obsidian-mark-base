@@ -14,7 +14,10 @@ import {
 	buildOrderedEntryMarkdown,
 	escapeLeadingFrontmatter,
 	expandEscapedNewlines,
+	extractMarkdownBody,
+	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
+	includeFileContentsProperty,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
 } from './content';
@@ -38,6 +41,7 @@ export class FreeformView extends BasesView {
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
+		this.allProperties = includeFileContentsProperty(this.allProperties);
 		this.rootEl = parentEl.createDiv({
 			cls: [
 				'mark-base-freeform',
@@ -59,7 +63,10 @@ export class FreeformView extends BasesView {
 		});
 		this.registerEvent(
 			this.app.vault.on('modify', (file) => {
-				if (file.path === this.getTemplatePath()) {
+				const isDisplayedFile = this.data.data.some(
+					(entry) => entry.file.path === file.path,
+				);
+				if (file.path === this.getTemplatePath() || isDisplayedFile) {
 					this.requestRender();
 				}
 			}),
@@ -173,7 +180,14 @@ export class FreeformView extends BasesView {
 		entry: BasesEntry,
 		renderComponent: Component,
 	): Promise<void> {
+		const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
+			? await this.readFileContent(entry)
+			: null;
 		const markdown = interpolateTemplate(template, (propertyId) => {
+			if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
+				return fileContents ?? '';
+			}
+
 			const value = entry.getValue(propertyId);
 			return value?.toString() ?? '';
 		});
@@ -196,10 +210,16 @@ export class FreeformView extends BasesView {
 		entry: BasesEntry,
 		renderComponent: Component,
 	): Promise<void> {
+		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
+			? await this.readFileContent(entry)
+			: null;
 		const markdown = buildOrderedEntryMarkdown(
 			propertyOrder.map((propertyId) => ({
 				propertyId,
-				value: entry.getValue(propertyId),
+				value:
+					propertyId === FILE_CONTENTS_PROPERTY_ID
+						? fileContents
+						: entry.getValue(propertyId),
 			})),
 			entry.file.path,
 			this.getLineSeparator(),
@@ -273,6 +293,10 @@ export class FreeformView extends BasesView {
 			this.config.getOrder(),
 			this.data.properties,
 		);
+	}
+
+	private async readFileContent(entry: BasesEntry): Promise<string> {
+		return extractMarkdownBody(await this.app.vault.cachedRead(entry.file));
 	}
 
 	private getShowExportButton(): boolean {

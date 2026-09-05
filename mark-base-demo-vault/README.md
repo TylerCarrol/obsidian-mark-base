@@ -19,6 +19,8 @@ Start with [[00 Start here]] for a quick live-demo script.
 
 The **Profiles** view renders selected formulas from the sample notes in
 `People/` as one Markdown document with separators between profiles.
+The **Manuscript** Base renders chapter headings and the Markdown bodies of its
+scene notes in sequence.
 
 ## Explore the example
 
@@ -31,6 +33,8 @@ The **Profiles** view renders selected formulas from the sample notes in
   between property blocks.
 - Change **Configure view → File separator**; use `\n` to add another line.
 - Clear **Configure view → File separator** to remove the horizontal rule.
+- Add `file.contents` in the Base properties menu and move it to where each
+  note's body should render.
 - Select `Templates/Person profile.md` under **Configure view → Template
   override** to try a fixed layout, then edit that file to see it update.
 

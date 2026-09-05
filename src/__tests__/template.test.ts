@@ -7,15 +7,16 @@ describe('interpolateTemplate', () => {
 			'note.title': 'Example note',
 			'formula.byline': 'A computed value',
 			'file.path': 'Notes/Example note.md',
+			'file.contents': 'The note body.',
 		};
 
 		const result = interpolateTemplate(
-			'# {{ note.title }}\n{{formula.byline}}\n{{file.path}}',
+			'# {{ note.title }}\n{{formula.byline}}\n{{file.path}}\n{{file.contents}}',
 			(propertyId) => values[propertyId],
 		);
 
 		expect(result).toBe(
-			'# Example note\nA computed value\nNotes/Example note.md',
+			'# Example note\nA computed value\nNotes/Example note.md\nThe note body.',
 		);
 	});
 

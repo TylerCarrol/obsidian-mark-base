@@ -4,13 +4,15 @@ filters:
 formulas:
   ExportTitleOrContents: |-
     if(tags.contains("chapter"),
-    "\n# Ch. " + chapter + ": " + title)
+    "\n# Ch. " + chapter +
+    ": " + title, "")
   ExportOrder: number(chapter + "." + scene)
 views:
   - type: freeform
     name: Manuscript
     order:
       - formula.ExportTitleOrContents
+      - file.contents
     sort:
       - property: formula.ExportOrder
         direction: ASC

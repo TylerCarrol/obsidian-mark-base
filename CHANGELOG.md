@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New "Export" settings group in the Freeform view with a "Show export button" toggle that displays an export button at the top of the view (not yet functional).
+- New `file.contents` Freeform property that renders a note's Markdown body wherever it appears in the property order, plus a `{{file.contents}}` template placeholder for explicit placement. YAML frontmatter is omitted.
 
 ## [0.2.2] - 2026-09-03
 
