@@ -10,7 +10,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New "Export" settings group in the Freeform view with a "Show export button" toggle that displays an export button at the top of the view (not yet functional).
-- New `file.contents` Freeform property that renders a note's Markdown body wherever it appears in the property order, plus a `{{file.contents}}` template placeholder for explicit placement. YAML frontmatter is omitted.
+- Added default export folder and file options. The folder option suggests
+  folders that already exist in the vault.
+- Added export toggles for stripping YAML frontmatter, comments, and links,
+  and for trimming trailing and leading whitespace.
+- Added an export toggle that creates a separate output file for each group.
+- New `file.contents` Freeform property that renders a note's Markdown content
+  wherever it appears in the property order, plus a `{{file.contents}}`
+  template placeholder for explicit placement.
+
+### Changed
+
+- The Freeform preview now applies the selected export cleanup options and
+  displays grouped exports as separate output sections.
+- Comment cleanup removes entire affected lines so comments do not leave blank
+  lines in the preview or exported Markdown.
 
 ## [0.2.2] - 2026-09-03
 

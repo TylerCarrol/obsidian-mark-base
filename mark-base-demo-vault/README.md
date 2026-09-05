@@ -33,6 +33,11 @@ scene notes in sequence.
   between property blocks.
 - Change **Configure view → File separator**; use `\n` to add another line.
 - Clear **Configure view → File separator** to remove the horizontal rule.
+- Under **Configure view → Export**, choose a default vault folder and enter a
+  default file name for future exports.
+- Toggle the export cleanup options to preview the resulting Markdown. When a
+  Base is grouped, enable **Group by creates separate output files** to preview
+  each group as a distinct output.
 - Add `file.contents` in the Base properties menu and move it to where each
   note's body should render.
 - Select `Templates/Person profile.md` under **Configure view → Template

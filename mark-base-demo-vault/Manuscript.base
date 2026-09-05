@@ -18,3 +18,11 @@ views:
         direction: ASC
     separator: ""
     lineSeparator: ""
+    stripYamlFrontmatter: true
+    stripComments: true
+    trimWhitespace: true
+    stripLinks: true
+    showExportButton: true
+    defaultExportFolder: Outputs
+    defaultExportFile: export.md
+    groupByCreatesSeparateOutputFiles: true

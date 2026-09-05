@@ -43,3 +43,16 @@
 	justify-content: center;
 	margin-block-end: var(--size-4-4);
 }
+
+.mark-base-freeform__output + .mark-base-freeform__output {
+	margin-block-start: var(--size-4-8);
+	padding-block-start: var(--size-4-6);
+	border-block-start: var(--border-width) solid var(--background-modifier-border);
+}
+
+.mark-base-freeform__output-name {
+	margin-block-end: var(--size-4-4);
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	font-weight: var(--font-semibold);
+}

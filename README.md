@@ -40,6 +40,9 @@ document.
    option to join results without a separator.
 5. Open the Base properties menu, add `file.contents`, and drag it to where the
    note's Markdown body should render. YAML frontmatter is omitted.
+6. Under **Configure view → Export**, configure the default vault folder and
+   file name for future exports. **Default folder** provides suggestions from
+   the folders that already exist in the vault.
 
 Each selected value is rendered as Markdown, in property-menu order. Single
 newlines in multiline formula values remain visible. `file.name` is rendered as

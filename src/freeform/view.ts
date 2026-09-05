@@ -21,6 +21,10 @@ import {
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
 } from './content';
+import {
+	type ExportTransformOptions,
+	transformExportMarkdown,
+} from './export';
 import { interpolateTemplate } from './template';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
@@ -28,9 +32,24 @@ export const TEMPLATE_OPTION_KEY = 'template';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
+export const DEFAULT_EXPORT_FOLDER_OPTION_KEY = 'defaultExportFolder';
+export const DEFAULT_EXPORT_FILE_OPTION_KEY = 'defaultExportFile';
+export const STRIP_YAML_FRONTMATTER_OPTION_KEY = 'stripYamlFrontmatter';
+export const STRIP_COMMENTS_OPTION_KEY = 'stripComments';
+export const TRIM_WHITESPACE_OPTION_KEY = 'trimWhitespace';
+export const STRIP_LINKS_OPTION_KEY = 'stripLinks';
+export const GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES_OPTION_KEY =
+	'groupByCreatesSeparateOutputFiles';
 export const DEFAULT_FILE_SEPARATOR = '---';
 export const DEFAULT_LINE_SEPARATOR = String.raw`\n`;
 export const DEFAULT_SHOW_EXPORT_BUTTON = false;
+export const DEFAULT_EXPORT_FOLDER = '';
+export const DEFAULT_EXPORT_FILE = 'export.md';
+export const DEFAULT_STRIP_YAML_FRONTMATTER = false;
+export const DEFAULT_STRIP_COMMENTS = false;
+export const DEFAULT_TRIM_WHITESPACE = false;
+export const DEFAULT_STRIP_LINKS = false;
+export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
 
 export class FreeformView extends BasesView {
 	readonly type = FREEFORM_VIEW_TYPE;
@@ -143,34 +162,57 @@ export class FreeformView extends BasesView {
 		this.addChild(renderComponent);
 		this.renderComponent = renderComponent;
 		const fileSeparator = this.getFileSeparator();
+		const transformOptions = this.getExportTransformOptions();
+		const groupedData = this.data.groupedData;
+		const renderSeparateOutputs =
+			this.getGroupByCreatesSeparateOutputFiles() &&
+			groupedData.some((group) => group.hasKey());
+		const outputGroups = renderSeparateOutputs
+			? groupedData.map((group) => ({
+					entries: group.entries,
+					name: group.key?.toString() ?? 'Ungrouped',
+				}))
+			: [{ entries, name: null }];
 
-		for (const [index, entry] of entries.entries()) {
-			if (index > 0 && fileSeparator) {
-				await this.renderSeparator(
-					fileSeparator,
-					entry,
-					renderComponent,
-				);
+		for (const group of outputGroups) {
+			const outputEl = group.name !== null
+				? this.createOutputPreview(group.name)
+				: this.rootEl;
+
+			for (const [index, entry] of group.entries.entries()) {
+				if (index > 0 && fileSeparator) {
+					await this.renderSeparator(
+						fileSeparator,
+						entry,
+						renderComponent,
+						outputEl,
+						transformOptions,
+					);
+					if (generation !== this.renderGeneration) {
+						return;
+					}
+				}
+
+				if (template === null) {
+					await this.renderOrderedEntry(
+						propertyOrder,
+						entry,
+						renderComponent,
+						outputEl,
+						transformOptions,
+					);
+				} else {
+					await this.renderTemplateEntry(
+						template,
+						entry,
+						renderComponent,
+						outputEl,
+						transformOptions,
+					);
+				}
 				if (generation !== this.renderGeneration) {
 					return;
 				}
-			}
-
-			if (template === null) {
-				await this.renderOrderedEntry(
-					propertyOrder,
-					entry,
-					renderComponent,
-				);
-			} else {
-				await this.renderTemplateEntry(
-					template,
-					entry,
-					renderComponent,
-				);
-			}
-			if (generation !== this.renderGeneration) {
-				return;
 			}
 		}
 	}
@@ -179,19 +221,27 @@ export class FreeformView extends BasesView {
 		template: string,
 		entry: BasesEntry,
 		renderComponent: Component,
+		outputEl: HTMLElement,
+		transformOptions: ExportTransformOptions,
 	): Promise<void> {
 		const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(entry)
+			? await this.readFileContent(
+					entry,
+					transformOptions.stripYamlFrontmatter,
+				)
 			: null;
-		const markdown = interpolateTemplate(template, (propertyId) => {
-			if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
-				return fileContents ?? '';
-			}
+		const markdown = transformExportMarkdown(
+			interpolateTemplate(template, (propertyId) => {
+				if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
+					return fileContents ?? '';
+				}
 
-			const value = entry.getValue(propertyId);
-			return value?.toString() ?? '';
-		});
-		const entryEl = this.rootEl.createDiv({
+				const value = entry.getValue(propertyId);
+				return value?.toString() ?? '';
+			}),
+			transformOptions,
+		);
+		const entryEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
@@ -209,22 +259,30 @@ export class FreeformView extends BasesView {
 		propertyOrder: BasesPropertyId[],
 		entry: BasesEntry,
 		renderComponent: Component,
+		outputEl: HTMLElement,
+		transformOptions: ExportTransformOptions,
 	): Promise<void> {
 		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(entry)
+			? await this.readFileContent(
+					entry,
+					transformOptions.stripYamlFrontmatter,
+				)
 			: null;
-		const markdown = buildOrderedEntryMarkdown(
-			propertyOrder.map((propertyId) => ({
-				propertyId,
-				value:
-					propertyId === FILE_CONTENTS_PROPERTY_ID
-						? fileContents
-						: entry.getValue(propertyId),
-			})),
-			entry.file.path,
-			this.getLineSeparator(),
+		const markdown = transformExportMarkdown(
+			buildOrderedEntryMarkdown(
+				propertyOrder.map((propertyId) => ({
+					propertyId,
+					value:
+						propertyId === FILE_CONTENTS_PROPERTY_ID
+							? fileContents
+							: entry.getValue(propertyId),
+				})),
+				entry.file.path,
+				this.getLineSeparator(),
+			),
+			transformOptions,
 		);
-		const entryEl = this.rootEl.createDiv({
+		const entryEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
@@ -246,15 +304,19 @@ export class FreeformView extends BasesView {
 		separator: string,
 		entry: BasesEntry,
 		renderComponent: Component,
+		outputEl: HTMLElement,
+		transformOptions: ExportTransformOptions,
 	): Promise<void> {
-		const separatorEl = this.rootEl.createDiv({
+		const separatorEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__separator',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
 
 		await MarkdownRenderer.render(
 			this.app,
-			escapeLeadingFrontmatter(separator),
+			escapeLeadingFrontmatter(
+				transformExportMarkdown(separator, transformOptions),
+			),
 			separatorEl,
 			entry.file.path,
 			renderComponent,
@@ -295,15 +357,63 @@ export class FreeformView extends BasesView {
 		);
 	}
 
-	private async readFileContent(entry: BasesEntry): Promise<string> {
-		return extractMarkdownBody(await this.app.vault.cachedRead(entry.file));
+	private async readFileContent(
+		entry: BasesEntry,
+		stripYamlFrontmatter: boolean,
+	): Promise<string> {
+		const content = await this.app.vault.cachedRead(entry.file);
+		return stripYamlFrontmatter ? extractMarkdownBody(content) : content;
+	}
+
+	private getExportTransformOptions(): ExportTransformOptions {
+		return {
+			stripYamlFrontmatter: this.getBooleanOption(
+				STRIP_YAML_FRONTMATTER_OPTION_KEY,
+				DEFAULT_STRIP_YAML_FRONTMATTER,
+			),
+			stripComments: this.getBooleanOption(
+				STRIP_COMMENTS_OPTION_KEY,
+				DEFAULT_STRIP_COMMENTS,
+			),
+			trimWhitespace: this.getBooleanOption(
+				TRIM_WHITESPACE_OPTION_KEY,
+				DEFAULT_TRIM_WHITESPACE,
+			),
+			stripLinks: this.getBooleanOption(
+				STRIP_LINKS_OPTION_KEY,
+				DEFAULT_STRIP_LINKS,
+			),
+		};
+	}
+
+	private getGroupByCreatesSeparateOutputFiles(): boolean {
+		return this.getBooleanOption(
+			GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES_OPTION_KEY,
+			DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES,
+		);
+	}
+
+	private getBooleanOption(key: string, defaultValue: boolean): boolean {
+		const configured = this.config.get(key);
+		return typeof configured === 'boolean' ? configured : defaultValue;
 	}
 
 	private getShowExportButton(): boolean {
-		const configured = this.config.get(SHOW_EXPORT_BUTTON_OPTION_KEY);
-		return typeof configured === 'boolean'
-			? configured
-			: DEFAULT_SHOW_EXPORT_BUTTON;
+		return this.getBooleanOption(
+			SHOW_EXPORT_BUTTON_OPTION_KEY,
+			DEFAULT_SHOW_EXPORT_BUTTON,
+		);
+	}
+
+	private createOutputPreview(groupName: string): HTMLElement {
+		const outputEl = this.rootEl.createDiv({
+			cls: 'mark-base-freeform__output',
+		});
+		outputEl.createDiv({
+			cls: 'mark-base-freeform__output-name',
+			text: groupName,
+		});
+		return outputEl;
 	}
 
 	private renderExportButton(): void {
