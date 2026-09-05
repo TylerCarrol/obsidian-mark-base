@@ -23,7 +23,7 @@ views:
     trimWhitespace: true
     stripLinks: true
     showExportButton: true
-    allowOverrides: false
+    allowOverrides: true
     defaultExportFolder: Outputs
     defaultExportFile: Export.md
     exportType: markdown

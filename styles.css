@@ -50,7 +50,10 @@
 
 .mark-base-export-modal__overrides {
 	margin-block: var(--size-4-4);
-	border-block: var(--border-width) solid var(--background-modifier-border);
+}
+
+.modal .mark-base-export-modal .setting-item {
+	border: none !important;
 }
 
 .mark-base-export-modal__overrides > summary {
