@@ -52,8 +52,8 @@
 	margin-block: var(--size-4-4);
 }
 
-.modal .mark-base-export-modal .setting-item {
-	border: none !important;
+.modal .modal-content.mark-base-export-modal .setting-item {
+	border: none;
 }
 
 .mark-base-export-modal__overrides > summary {
