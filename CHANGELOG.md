@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New "Export" settings group in the Freeform view with a "Show export button" toggle that displays an export button at the top of the view (not yet functional).
+
 ## [0.2.2] - 2026-09-03
 
 ### Changed

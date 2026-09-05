@@ -2,6 +2,8 @@
   "types": {
     "aliases": "aliases",
     "cssclasses": "multitext",
-    "tags": "tags"
+    "tags": "tags",
+    "chapter": "number",
+    "scene": "number"
   }
 }

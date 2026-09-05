@@ -1,0 +1,18 @@
+filters:
+  and:
+    - file.hasTag("chapter", "scene")
+formulas:
+  ExportTitleOrContents: |-
+    if(tags.contains("chapter"),
+    "\n# Ch. " + chapter + ": " + title)
+  ExportOrder: number(chapter + "." + scene)
+views:
+  - type: freeform
+    name: Manuscript
+    order:
+      - formula.ExportTitleOrContents
+    sort:
+      - property: formula.ExportOrder
+        direction: ASC
+    separator: ""
+    lineSeparator: ""

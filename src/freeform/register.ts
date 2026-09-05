@@ -2,10 +2,12 @@ import type { BasesAllOptions, Plugin } from 'obsidian';
 import {
 	DEFAULT_FILE_SEPARATOR,
 	DEFAULT_LINE_SEPARATOR,
+	DEFAULT_SHOW_EXPORT_BUTTON,
 	FILE_SEPARATOR_OPTION_KEY,
 	FREEFORM_VIEW_TYPE,
 	FreeformView,
 	LINE_SEPARATOR_OPTION_KEY,
+	SHOW_EXPORT_BUTTON_OPTION_KEY,
 	TEMPLATE_OPTION_KEY,
 } from './view';
 
@@ -30,6 +32,18 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 		displayName: 'Line separator',
 		default: DEFAULT_LINE_SEPARATOR,
 		placeholder: String.raw`Markdown between properties; use \n\n for a blank line`,
+	},
+	{
+		type: 'group',
+		displayName: 'Export',
+		items: [
+			{
+				type: 'toggle',
+				key: SHOW_EXPORT_BUTTON_OPTION_KEY,
+				displayName: 'Show export button',
+				default: DEFAULT_SHOW_EXPORT_BUTTON,
+			},
+		],
 	},
 ];
 

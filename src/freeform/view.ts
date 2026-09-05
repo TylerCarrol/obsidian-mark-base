@@ -3,6 +3,7 @@ import {
 	Component,
 	Keymap,
 	MarkdownRenderer,
+	Notice,
 	normalizePath,
 	TFile,
 	type BasesEntry,
@@ -23,8 +24,10 @@ export const FREEFORM_VIEW_TYPE = 'freeform';
 export const TEMPLATE_OPTION_KEY = 'template';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
+export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
 export const DEFAULT_FILE_SEPARATOR = '---';
 export const DEFAULT_LINE_SEPARATOR = String.raw`\n`;
+export const DEFAULT_SHOW_EXPORT_BUTTON = false;
 
 export class FreeformView extends BasesView {
 	readonly type = FREEFORM_VIEW_TYPE;
@@ -272,6 +275,30 @@ export class FreeformView extends BasesView {
 		);
 	}
 
+	private getShowExportButton(): boolean {
+		const configured = this.config.get(SHOW_EXPORT_BUTTON_OPTION_KEY);
+		return typeof configured === 'boolean'
+			? configured
+			: DEFAULT_SHOW_EXPORT_BUTTON;
+	}
+
+	private renderExportButton(): void {
+		if (!this.getShowExportButton()) {
+			return;
+		}
+
+		const barEl = this.rootEl.createDiv({
+			cls: 'mark-base-freeform__export-bar',
+		});
+		const buttonEl = barEl.createEl('button', {
+			cls: 'mark-base-freeform__export-button',
+			text: 'Export',
+		});
+		buttonEl.addEventListener('click', () => {
+			new Notice('Export is not yet implemented.');
+		});
+	}
+
 	private openInternalLink(event: MouseEvent): void {
 		const eventTarget = event.target as Node | null;
 		if (!eventTarget?.instanceOf(Element)) {
@@ -309,6 +336,7 @@ export class FreeformView extends BasesView {
 	private resetSurface(): void {
 		this.clearRenderComponent();
 		this.rootEl.empty();
+		this.renderExportButton();
 	}
 
 	private clearRenderComponent(): void {

@@ -37,3 +37,9 @@
 	color: var(--text-muted);
 	text-align: center;
 }
+
+.mark-base-freeform__export-bar {
+	display: flex;
+	justify-content: center;
+	margin-block-end: var(--size-4-4);
+}
