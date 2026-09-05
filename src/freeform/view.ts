@@ -6,6 +6,7 @@ import {
 	Notice,
 	normalizePath,
 	TFile,
+	TFolder,
 	type BasesEntry,
 	type BasesPropertyId,
 	type QueryController,
@@ -22,9 +23,13 @@ import {
 	SOURCE_PATH_ATTRIBUTE,
 } from './content';
 import {
+	type ExportOptions,
 	type ExportTransformOptions,
+	getExportFileName,
+	getExportPath,
 	transformExportMarkdown,
 } from './export';
+import { ExportModal } from './export-modal';
 import { interpolateTemplate } from './template';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
@@ -34,6 +39,7 @@ export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
 export const DEFAULT_EXPORT_FOLDER_OPTION_KEY = 'defaultExportFolder';
 export const DEFAULT_EXPORT_FILE_OPTION_KEY = 'defaultExportFile';
+export const EXPORT_TYPE_OPTION_KEY = 'exportType';
 export const STRIP_YAML_FRONTMATTER_OPTION_KEY = 'stripYamlFrontmatter';
 export const STRIP_COMMENTS_OPTION_KEY = 'stripComments';
 export const TRIM_WHITESPACE_OPTION_KEY = 'trimWhitespace';
@@ -45,6 +51,7 @@ export const DEFAULT_LINE_SEPARATOR = String.raw`\n`;
 export const DEFAULT_SHOW_EXPORT_BUTTON = false;
 export const DEFAULT_EXPORT_FOLDER = '';
 export const DEFAULT_EXPORT_FILE = 'export.md';
+export const DEFAULT_EXPORT_TYPE = 'markdown';
 export const DEFAULT_STRIP_YAML_FRONTMATTER = false;
 export const DEFAULT_STRIP_COMMENTS = false;
 export const DEFAULT_TRIM_WHITESPACE = false;
@@ -386,6 +393,25 @@ export class FreeformView extends BasesView {
 		};
 	}
 
+	private getExportOptions(): ExportOptions {
+		const configuredType = this.config.get(EXPORT_TYPE_OPTION_KEY);
+
+		return {
+			...this.getExportTransformOptions(),
+			folder: this.getStringOption(
+				DEFAULT_EXPORT_FOLDER_OPTION_KEY,
+				DEFAULT_EXPORT_FOLDER,
+			),
+			file: this.getStringOption(
+				DEFAULT_EXPORT_FILE_OPTION_KEY,
+				DEFAULT_EXPORT_FILE,
+			),
+			type: configuredType === 'markdown' ? configuredType : DEFAULT_EXPORT_TYPE,
+			groupByCreatesSeparateOutputFiles:
+				this.getGroupByCreatesSeparateOutputFiles(),
+		};
+	}
+
 	private getGroupByCreatesSeparateOutputFiles(): boolean {
 		return this.getBooleanOption(
 			GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES_OPTION_KEY,
@@ -396,6 +422,11 @@ export class FreeformView extends BasesView {
 	private getBooleanOption(key: string, defaultValue: boolean): boolean {
 		const configured = this.config.get(key);
 		return typeof configured === 'boolean' ? configured : defaultValue;
+	}
+
+	private getStringOption(key: string, defaultValue: string): string {
+		const configured = this.config.get(key);
+		return typeof configured === 'string' ? configured : defaultValue;
 	}
 
 	private getShowExportButton(): boolean {
@@ -429,8 +460,178 @@ export class FreeformView extends BasesView {
 			text: 'Export',
 		});
 		buttonEl.addEventListener('click', () => {
-			new Notice('Export is not yet implemented.');
+			new ExportModal(
+				this.app,
+				this.getExportOptions(),
+				(options) => this.exportMarkdown(options),
+			).open();
 		});
+	}
+
+	private async exportMarkdown(options: ExportOptions): Promise<void> {
+		const template = await this.readTemplate();
+		const propertyOrder = template === null ? this.getPropertyOrder() : [];
+		if (template === null && propertyOrder.length === 0) {
+			throw new Error(
+				'Choose properties to display or select a Markdown template before exporting.',
+			);
+		}
+
+		const groupedData = this.data.groupedData;
+		const separateGroups =
+			options.groupByCreatesSeparateOutputFiles &&
+			groupedData.some((group) => group.hasKey());
+		const outputGroups = separateGroups
+			? groupedData.map((group) => ({
+					entries: group.entries,
+					name: group.key?.toString() ?? 'Ungrouped',
+				}))
+			: [{ entries: this.data.data, name: undefined }];
+		const paths = new Set<string>();
+		const outputs: { path: string; markdown: string }[] = [];
+
+		for (const group of outputGroups) {
+			const fileName = getExportFileName(options.file, group.name);
+			const path = normalizePath(getExportPath(options.folder, fileName));
+			if (paths.has(path)) {
+				throw new Error(`Multiple groups resolve to the export file "${path}".`);
+			}
+			paths.add(path);
+
+			outputs.push({
+				path,
+				markdown: await this.buildExportMarkdown(
+					group.entries,
+					template,
+					propertyOrder,
+					options,
+				),
+			});
+		}
+
+		await this.ensureExportFolder(options.folder);
+		for (const output of outputs) {
+			const existingFile = this.app.vault.getAbstractFileByPath(output.path);
+			if (existingFile instanceof TFolder) {
+				throw new Error(`The export path "${output.path}" is a folder.`);
+			}
+			if (existingFile instanceof TFile) {
+				await this.app.vault.modify(existingFile, output.markdown);
+			} else {
+				await this.app.vault.create(output.path, output.markdown);
+			}
+		}
+
+		new Notice(
+			paths.size === 1
+				? `Exported to ${[...paths][0]}.`
+				: `Exported ${paths.size} Markdown files.`,
+		);
+	}
+
+	private async readTemplate(): Promise<string | null> {
+		const templatePath = this.getTemplatePath();
+		if (!templatePath) {
+			return null;
+		}
+
+		const templateFile = this.app.vault.getAbstractFileByPath(templatePath);
+		if (
+			!(templateFile instanceof TFile) ||
+			templateFile.extension.toLowerCase() !== 'md'
+		) {
+			throw new Error('The configured Markdown template was not found.');
+		}
+
+		return this.app.vault.read(templateFile);
+	}
+
+	private async buildExportMarkdown(
+		entries: BasesEntry[],
+		template: string | null,
+		propertyOrder: BasesPropertyId[],
+		options: ExportOptions,
+	): Promise<string> {
+		const parts: string[] = [];
+		const separator = transformExportMarkdown(
+			this.getFileSeparator(),
+			options,
+		);
+
+		for (const [index, entry] of entries.entries()) {
+			if (index > 0 && separator) {
+				parts.push(separator);
+			}
+			parts.push(
+				await this.buildEntryExportMarkdown(
+					entry,
+					template,
+					propertyOrder,
+					options,
+				),
+			);
+		}
+
+		return parts.join('\n');
+	}
+
+	private async buildEntryExportMarkdown(
+		entry: BasesEntry,
+		template: string | null,
+		propertyOrder: BasesPropertyId[],
+		options: ExportOptions,
+	): Promise<string> {
+		if (template !== null) {
+			const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
+				? await this.readFileContent(entry, options.stripYamlFrontmatter)
+				: null;
+			return transformExportMarkdown(
+				interpolateTemplate(template, (propertyId) => {
+					if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
+						return fileContents ?? '';
+					}
+					return entry.getValue(propertyId)?.toString() ?? '';
+				}),
+				options,
+			);
+		}
+
+		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
+			? await this.readFileContent(entry, options.stripYamlFrontmatter)
+			: null;
+		return transformExportMarkdown(
+			buildOrderedEntryMarkdown(
+				propertyOrder.map((propertyId) => ({
+					propertyId,
+					value:
+						propertyId === FILE_CONTENTS_PROPERTY_ID
+							? fileContents
+							: entry.getValue(propertyId),
+				})),
+				entry.file.path,
+				this.getLineSeparator(),
+			),
+			options,
+		);
+	}
+
+	private async ensureExportFolder(folder: string): Promise<void> {
+		const normalizedFolder = normalizePath(folder.trim());
+		if (!normalizedFolder || normalizedFolder === '/') {
+			return;
+		}
+
+		let currentPath = '';
+		for (const segment of normalizedFolder.split('/').filter(Boolean)) {
+			currentPath = currentPath ? `${currentPath}/${segment}` : segment;
+			const existing = this.app.vault.getAbstractFileByPath(currentPath);
+			if (existing instanceof TFile) {
+				throw new Error(`The export folder "${currentPath}" is a file.`);
+			}
+			if (!existing) {
+				await this.app.vault.createFolder(currentPath);
+			}
+		}
 	}
 
 	private openInternalLink(event: MouseEvent): void {

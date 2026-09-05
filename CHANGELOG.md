@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New "Export" settings group in the Freeform view with a "Show export button" toggle that displays an export button at the top of the view (not yet functional).
+- New "Export" settings group in the Freeform view with a "Show export button" toggle that displays an export button at the top of the view.
 - Added default export folder and file options. The folder option suggests
   folders that already exist in the vault.
+- Added an "Export type" dropdown with Markdown as the initial format.
 - Added export toggles for stripping YAML frontmatter, comments, and links,
   and for trimming trailing and leading whitespace.
 - Added an export toggle that creates a separate output file for each group.
@@ -21,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Freeform export button now opens a modal for temporary setting overrides
+  and writes Markdown exports to the configured vault destination.
 - The Freeform preview now applies the selected export cleanup options and
   displays grouped exports as separate output sections.
 - Comment cleanup removes entire affected lines so comments do not leave blank

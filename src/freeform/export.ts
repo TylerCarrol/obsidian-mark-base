@@ -7,6 +7,30 @@ export interface ExportTransformOptions {
 	stripLinks: boolean;
 }
 
+export interface ExportOptions extends ExportTransformOptions {
+	folder: string;
+	file: string;
+	type: 'markdown';
+	groupByCreatesSeparateOutputFiles: boolean;
+}
+
+export function getExportFileName(file: string, groupName?: string): string {
+	const trimmedFile = file.trim() || 'export.md';
+	const extensionIndex = trimmedFile.toLowerCase().endsWith('.md')
+		? trimmedFile.length - 3
+		: trimmedFile.length;
+	const stem = sanitizeFileName(trimmedFile.slice(0, extensionIndex));
+	const suffix =
+		groupName === undefined ? '' : `-${sanitizeFileName(groupName)}`;
+
+	return `${stem}${suffix}.md`;
+}
+
+export function getExportPath(folder: string, fileName: string): string {
+	const normalizedFolder = folder.trim().replaceAll('\\', '/').replace(/^\/+|\/+$/g, '');
+	return normalizedFolder ? `${normalizedFolder}/${fileName}` : fileName;
+}
+
 export function transformExportMarkdown(
 	markdown: string,
 	options: ExportTransformOptions,
@@ -61,4 +85,14 @@ function stripLinkMarkup(markdown: string): string {
 		.replace(/!?\[([^\]]*)\]\s*\[[^\]]*\]/g, '$1')
 		.replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, '')
 		.replace(/<(https?:\/\/[^>]+|mailto:[^>]+)>/gi, '$1');
+}
+
+function sanitizeFileName(fileName: string): string {
+	const sanitized = fileName
+		.replace(/[\\/:*?"<>|]/g, '-')
+		.replace(/\s+/g, ' ')
+		.replace(/[. ]+$/g, '')
+		.trim();
+
+	return sanitized || 'Ungrouped';
 }

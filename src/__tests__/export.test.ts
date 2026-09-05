@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { transformExportMarkdown } from '../freeform/export';
+import {
+	getExportFileName,
+	getExportPath,
+	transformExportMarkdown,
+} from '../freeform/export';
 
 const DEFAULT_OPTIONS = {
 	stripYamlFrontmatter: false,
@@ -72,5 +76,25 @@ describe('transformExportMarkdown', () => {
 				trimWhitespace: true,
 			}),
 		).toBe('Body');
+	});
+});
+
+describe('export destinations', () => {
+	it('normalizes Markdown filenames and optional group suffixes', () => {
+		expect(getExportFileName('draft')).toBe('draft.md');
+		expect(getExportFileName('draft.MD')).toBe('draft.md');
+		expect(getExportFileName('draft.md', 'Status: In progress')).toBe(
+			'draft-Status- In progress.md',
+		);
+		expect(getExportFileName('../draft.md', '')).toBe(
+			'..-draft-Ungrouped.md',
+		);
+	});
+
+	it('joins normalized vault folders and files', () => {
+		expect(getExportPath('', 'export.md')).toBe('export.md');
+		expect(getExportPath('/Exports\\Drafts/', 'export.md')).toBe(
+			'Exports/Drafts/export.md',
+		);
 	});
 });

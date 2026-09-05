@@ -44,6 +44,22 @@
 	margin-block-end: var(--size-4-4);
 }
 
+.mark-base-export-modal__overrides {
+	margin-block: var(--size-4-4);
+	border-block: var(--border-width) solid var(--background-modifier-border);
+}
+
+.mark-base-export-modal__overrides > summary {
+	padding-block: var(--size-4-3);
+	font-weight: var(--font-semibold);
+	cursor: pointer;
+}
+
+.mark-base-export-modal__actions {
+	justify-content: flex-end;
+	padding-block-end: 0;
+}
+
 .mark-base-freeform__output + .mark-base-freeform__output {
 	margin-block-start: var(--size-4-8);
 	padding-block-start: var(--size-4-6);

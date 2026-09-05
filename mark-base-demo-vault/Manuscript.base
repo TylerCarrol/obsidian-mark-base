@@ -4,8 +4,8 @@ filters:
 formulas:
   ExportTitleOrContents: |-
     if(tags.contains("chapter"),
-    "\n# Ch. " + chapter +
-    ": " + title, "")
+    "\n\n# Ch. " + chapter +
+    ": " + title + "\n", "")
   ExportOrder: number(chapter + "." + scene)
 views:
   - type: freeform
@@ -24,5 +24,6 @@ views:
     stripLinks: true
     showExportButton: true
     defaultExportFolder: Outputs
-    defaultExportFile: export.md
+    defaultExportFile: Export.md
+    exportType: markdown
     groupByCreatesSeparateOutputFiles: true
