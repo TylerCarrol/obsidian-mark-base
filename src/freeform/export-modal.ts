@@ -74,6 +74,13 @@ export class ExportModal extends Modal {
 					});
 			});
 
+		this.addToggle(
+			this.contentEl,
+			'Open file after export',
+			'openFileAfterExport',
+			'Opens the first file when exporting multiple groups.',
+		);
+
 		new Setting(this.contentEl)
 			.setClass('mark-base-export-modal__actions')
 			.addButton((button) => {
@@ -104,9 +111,15 @@ export class ExportModal extends Modal {
 			| 'stripComments'
 			| 'trimWhitespace'
 			| 'stripLinks'
+			| 'openFileAfterExport'
 		>,
+		description?: string,
 	): void {
-		new Setting(containerEl).setName(name).addToggle((toggle) => {
+		const setting = new Setting(containerEl).setName(name);
+		if (description) {
+			setting.setDesc(description);
+		}
+		setting.addToggle((toggle) => {
 			toggle.setValue(this.options[key]).onChange((value) => {
 				this.options[key] = value;
 			});

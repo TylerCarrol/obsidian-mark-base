@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added export toggles for stripping YAML frontmatter, comments, and links,
   and for trimming trailing and leading whitespace.
 - Added an export toggle that creates a separate output file for each group.
+- Added an option to open the exported file in a new tab after export.
 - New `file.contents` Freeform property that renders a note's Markdown content
   wherever it appears in the property order, plus a `{{file.contents}}`
   template placeholder for explicit placement.

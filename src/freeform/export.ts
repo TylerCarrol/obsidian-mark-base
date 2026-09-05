@@ -12,6 +12,7 @@ export interface ExportOptions extends ExportTransformOptions {
 	file: string;
 	type: 'markdown';
 	groupByCreatesSeparateOutputFiles: boolean;
+	openFileAfterExport: boolean;
 }
 
 export interface ExportTransformBoundaries {

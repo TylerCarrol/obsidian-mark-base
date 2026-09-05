@@ -47,6 +47,7 @@ export const TRIM_WHITESPACE_OPTION_KEY = 'trimWhitespace';
 export const STRIP_LINKS_OPTION_KEY = 'stripLinks';
 export const GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES_OPTION_KEY =
 	'groupByCreatesSeparateOutputFiles';
+export const OPEN_FILE_AFTER_EXPORT_OPTION_KEY = 'openFileAfterExport';
 export const DEFAULT_FILE_SEPARATOR = '---';
 export const DEFAULT_LINE_SEPARATOR = String.raw`\n`;
 export const DEFAULT_SHOW_EXPORT_BUTTON = false;
@@ -58,6 +59,7 @@ export const DEFAULT_STRIP_COMMENTS = false;
 export const DEFAULT_TRIM_WHITESPACE = false;
 export const DEFAULT_STRIP_LINKS = false;
 export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
+export const DEFAULT_OPEN_FILE_AFTER_EXPORT = false;
 
 export class FreeformView extends BasesView {
 	readonly type = FREEFORM_VIEW_TYPE;
@@ -443,6 +445,10 @@ export class FreeformView extends BasesView {
 			type: configuredType === 'markdown' ? configuredType : DEFAULT_EXPORT_TYPE,
 			groupByCreatesSeparateOutputFiles:
 				this.getGroupByCreatesSeparateOutputFiles(),
+			openFileAfterExport: this.getBooleanOption(
+				OPEN_FILE_AFTER_EXPORT_OPTION_KEY,
+				DEFAULT_OPEN_FILE_AFTER_EXPORT,
+			),
 		};
 	}
 
@@ -544,6 +550,7 @@ export class FreeformView extends BasesView {
 		}
 
 		await this.ensureExportFolder(options.folder);
+		const exportedFiles: TFile[] = [];
 		for (const output of outputs) {
 			const existingFile = this.app.vault.getAbstractFileByPath(output.path);
 			if (existingFile instanceof TFolder) {
@@ -551,9 +558,15 @@ export class FreeformView extends BasesView {
 			}
 			if (existingFile instanceof TFile) {
 				await this.app.vault.modify(existingFile, output.markdown);
+				exportedFiles.push(existingFile);
 			} else {
-				await this.app.vault.create(output.path, output.markdown);
+				exportedFiles.push(
+					await this.app.vault.create(output.path, output.markdown),
+				);
 			}
+		}
+		if (options.openFileAfterExport && exportedFiles[0]) {
+			await this.app.workspace.getLeaf('tab').openFile(exportedFiles[0]);
 		}
 
 		new Notice(

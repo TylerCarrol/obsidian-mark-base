@@ -27,3 +27,4 @@ views:
     defaultExportFile: Export.md
     exportType: markdown
     groupByCreatesSeparateOutputFiles: true
+    openFileAfterExport: true
