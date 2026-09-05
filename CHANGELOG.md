@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-05
+
 ### Fixed
 
 - Lint warnings
@@ -72,7 +74,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Freeform Bases view with Markdown templates, property and formula
   placeholders, configurable separators, and demo vault content.
 
-[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.1...HEAD
+
+[0.3.1]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.0...v0.3.1
 
 [0.3.0]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.2.2...v0.3.0
 

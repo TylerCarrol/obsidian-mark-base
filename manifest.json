@@ -1,7 +1,7 @@
 {
 	"id": "mark-base",
 	"name": "MarkBase",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"minAppVersion": "1.13.0",
 	"description": "Create freeform markdown base views.",
 	"author": "Tyler Carrol",
