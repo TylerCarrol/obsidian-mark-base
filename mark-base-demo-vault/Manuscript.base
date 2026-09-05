@@ -4,7 +4,7 @@ filters:
 formulas:
   ExportTitleOrContents: |-
     if(tags.contains("chapter"),
-    "\n\n# Ch. " + chapter +
+    "\n# Ch. " + chapter +
     ": " + title + "\n", "")
   ExportOrder: number(chapter + "." + scene)
 views:

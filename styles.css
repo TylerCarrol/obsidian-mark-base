@@ -20,6 +20,10 @@
 	margin-block-end: 0;
 }
 
+.mark-base-freeform__boundary-newline + * {
+	margin-block-start: 0;
+}
+
 .mark-base-freeform__separator {
 	white-space: pre-line;
 }

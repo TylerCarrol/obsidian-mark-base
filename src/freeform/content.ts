@@ -14,11 +14,15 @@ export interface InternalLinkTarget {
 }
 
 export function expandEscapedNewlines(markdown: string): string {
-	return markdown.replaceAll('\\n', '\n');
+	return markdown.replace(/\\+n/g, '\n');
 }
 
 export function extractMarkdownBody(fileContent: string): string {
 	return fileContent.replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, '');
+}
+
+export function trimFileBoundaryWhitespace(fileContent: string): string {
+	return fileContent.trim();
 }
 
 export function includeFileContentsProperty(

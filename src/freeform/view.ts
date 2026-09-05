@@ -21,6 +21,7 @@ import {
 	includeFileContentsProperty,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
+	trimFileBoundaryWhitespace,
 } from './content';
 import {
 	type ExportOptions,
@@ -207,6 +208,8 @@ export class FreeformView extends BasesView {
 						renderComponent,
 						outputEl,
 						transformOptions,
+						index === 0,
+						index === group.entries.length - 1,
 					);
 				} else {
 					await this.renderTemplateEntry(
@@ -215,6 +218,8 @@ export class FreeformView extends BasesView {
 						renderComponent,
 						outputEl,
 						transformOptions,
+						index === 0,
+						index === group.entries.length - 1,
 					);
 				}
 				if (generation !== this.renderGeneration) {
@@ -230,11 +235,14 @@ export class FreeformView extends BasesView {
 		renderComponent: Component,
 		outputEl: HTMLElement,
 		transformOptions: ExportTransformOptions,
+		trimStart: boolean,
+		trimEnd: boolean,
 	): Promise<void> {
 		const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
 			? await this.readFileContent(
 					entry,
 					transformOptions.stripYamlFrontmatter,
+					transformOptions.trimWhitespace,
 				)
 			: null;
 		const markdown = transformExportMarkdown(
@@ -244,14 +252,16 @@ export class FreeformView extends BasesView {
 				}
 
 				const value = entry.getValue(propertyId);
-				return value?.toString() ?? '';
+				return expandEscapedNewlines(value?.toString() ?? '');
 			}),
 			transformOptions,
+			{ trimStart, trimEnd },
 		);
 		const entryEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
+		this.renderLeadingNewlines(entryEl, markdown);
 
 		await MarkdownRenderer.render(
 			this.app,
@@ -268,11 +278,14 @@ export class FreeformView extends BasesView {
 		renderComponent: Component,
 		outputEl: HTMLElement,
 		transformOptions: ExportTransformOptions,
+		trimStart: boolean,
+		trimEnd: boolean,
 	): Promise<void> {
 		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
 			? await this.readFileContent(
 					entry,
 					transformOptions.stripYamlFrontmatter,
+					transformOptions.trimWhitespace,
 				)
 			: null;
 		const markdown = transformExportMarkdown(
@@ -288,11 +301,13 @@ export class FreeformView extends BasesView {
 				this.getLineSeparator(),
 			),
 			transformOptions,
+			{ trimStart, trimEnd },
 		);
 		const entryEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
+		this.renderLeadingNewlines(entryEl, markdown);
 
 		if (!markdown) {
 			return;
@@ -305,6 +320,19 @@ export class FreeformView extends BasesView {
 			entry.file.path,
 			renderComponent,
 		);
+	}
+
+	private renderLeadingNewlines(
+		entryEl: HTMLElement,
+		markdown: string,
+	): void {
+		const leadingNewlines = markdown.match(/^(?:\r?\n)+/)?.[0];
+		const newlineCount = leadingNewlines?.match(/\n/g)?.length ?? 0;
+		for (let index = 0; index < newlineCount; index++) {
+			entryEl.createEl('br', {
+				cls: 'mark-base-freeform__boundary-newline',
+			});
+		}
 	}
 
 	private async renderSeparator(
@@ -367,9 +395,15 @@ export class FreeformView extends BasesView {
 	private async readFileContent(
 		entry: BasesEntry,
 		stripYamlFrontmatter: boolean,
+		trimWhitespace: boolean,
 	): Promise<string> {
 		const content = await this.app.vault.cachedRead(entry.file);
-		return stripYamlFrontmatter ? extractMarkdownBody(content) : content;
+		const markdown = stripYamlFrontmatter
+			? extractMarkdownBody(content)
+			: content;
+		return trimWhitespace
+			? trimFileBoundaryWhitespace(markdown)
+			: markdown;
 	}
 
 	private getExportTransformOptions(): ExportTransformOptions {
@@ -556,7 +590,9 @@ export class FreeformView extends BasesView {
 		const separator = transformExportMarkdown(
 			this.getFileSeparator(),
 			options,
+			{ trimStart: false, trimEnd: false },
 		);
+		const untrimmedOptions = { ...options, trimWhitespace: false };
 
 		for (const [index, entry] of entries.entries()) {
 			if (index > 0 && separator) {
@@ -567,12 +603,14 @@ export class FreeformView extends BasesView {
 					entry,
 					template,
 					propertyOrder,
-					options,
+					untrimmedOptions,
+					options.trimWhitespace,
 				),
 			);
 		}
 
-		return parts.join('\n');
+		const markdown = parts.join('\n');
+		return options.trimWhitespace ? markdown.trim() : markdown;
 	}
 
 	private async buildEntryExportMarkdown(
@@ -580,24 +618,35 @@ export class FreeformView extends BasesView {
 		template: string | null,
 		propertyOrder: BasesPropertyId[],
 		options: ExportOptions,
+		trimFileWhitespace: boolean,
 	): Promise<string> {
 		if (template !== null) {
 			const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
-				? await this.readFileContent(entry, options.stripYamlFrontmatter)
+				? await this.readFileContent(
+						entry,
+						options.stripYamlFrontmatter,
+						trimFileWhitespace,
+					)
 				: null;
 			return transformExportMarkdown(
 				interpolateTemplate(template, (propertyId) => {
 					if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
 						return fileContents ?? '';
 					}
-					return entry.getValue(propertyId)?.toString() ?? '';
+					return expandEscapedNewlines(
+						entry.getValue(propertyId)?.toString() ?? '',
+					);
 				}),
 				options,
 			);
 		}
 
 		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(entry, options.stripYamlFrontmatter)
+			? await this.readFileContent(
+					entry,
+					options.stripYamlFrontmatter,
+					trimFileWhitespace,
+				)
 			: null;
 		return transformExportMarkdown(
 			buildOrderedEntryMarkdown(

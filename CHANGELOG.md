@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Escaped newlines in formula values are now preserved in Freeform previews and
+  exports, including at entry boundaries when whitespace trimming is enabled.
+- Whitespace trimming now removes blank lines at the beginning and end of each
+  included Markdown file before composing the preview or export.
 - The Freeform export button now opens a modal for temporary setting overrides
   and writes Markdown exports to the configured vault destination.
 - The Freeform preview now applies the selected export cleanup options and

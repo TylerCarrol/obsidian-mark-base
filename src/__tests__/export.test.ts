@@ -77,6 +77,23 @@ describe('transformExportMarkdown', () => {
 			}),
 		).toBe('Body');
 	});
+
+	it('preserves whitespace at entry boundaries when requested', () => {
+		const options = { ...DEFAULT_OPTIONS, trimWhitespace: true };
+
+		expect(
+			transformExportMarkdown('\n\n# Chapter\n', options, {
+				trimStart: false,
+				trimEnd: true,
+			}),
+		).toBe('\n\n# Chapter');
+		expect(
+			transformExportMarkdown('Scene\n\n', options, {
+				trimStart: true,
+				trimEnd: false,
+			}),
+		).toBe('Scene\n\n');
+	});
 });
 
 describe('export destinations', () => {

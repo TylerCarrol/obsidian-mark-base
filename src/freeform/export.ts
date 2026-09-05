@@ -14,6 +14,11 @@ export interface ExportOptions extends ExportTransformOptions {
 	groupByCreatesSeparateOutputFiles: boolean;
 }
 
+export interface ExportTransformBoundaries {
+	trimStart: boolean;
+	trimEnd: boolean;
+}
+
 export function getExportFileName(file: string, groupName?: string): string {
 	const trimmedFile = file.trim() || 'export.md';
 	const extensionIndex = trimmedFile.toLowerCase().endsWith('.md')
@@ -34,6 +39,10 @@ export function getExportPath(folder: string, fileName: string): string {
 export function transformExportMarkdown(
 	markdown: string,
 	options: ExportTransformOptions,
+	boundaries: ExportTransformBoundaries = {
+		trimStart: true,
+		trimEnd: true,
+	},
 ): string {
 	let transformed = markdown;
 
@@ -47,7 +56,12 @@ export function transformExportMarkdown(
 		transformed = stripLinkMarkup(transformed);
 	}
 	if (options.trimWhitespace) {
-		transformed = transformed.trim();
+		if (boundaries.trimStart) {
+			transformed = transformed.trimStart();
+		}
+		if (boundaries.trimEnd) {
+			transformed = transformed.trimEnd();
+		}
 	}
 
 	return transformed;

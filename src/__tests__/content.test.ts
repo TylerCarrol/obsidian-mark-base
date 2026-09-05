@@ -9,6 +9,7 @@ import {
 	includeFileContentsProperty,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
+	trimFileBoundaryWhitespace,
 } from '../freeform/content';
 
 describe('expandEscapedNewlines', () => {
@@ -17,6 +18,9 @@ describe('expandEscapedNewlines', () => {
 			'---\nNext',
 		);
 		expect(expandEscapedNewlines('---\nNext')).toBe('---\nNext');
+		expect(expandEscapedNewlines(String.raw`---\\nNext`)).toBe(
+			'---\nNext',
+		);
 	});
 });
 
@@ -29,6 +33,20 @@ describe('extractMarkdownBody', () => {
 
 	it('preserves content when the file has no frontmatter', () => {
 		expect(extractMarkdownBody('# Body\n\nText')).toBe('# Body\n\nText');
+	});
+});
+
+describe('trimFileBoundaryWhitespace', () => {
+	it('removes spaces and complete blank lines from file boundaries', () => {
+		expect(
+			trimFileBoundaryWhitespace(' \t\n\n  First line\nMiddle\n\n \t'),
+		).toBe('First line\nMiddle');
+	});
+
+	it('preserves blank lines inside a file', () => {
+		expect(trimFileBoundaryWhitespace('First\n\nSecond')).toBe(
+			'First\n\nSecond',
+		);
 	});
 });
 
