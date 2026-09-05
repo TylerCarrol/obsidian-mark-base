@@ -1,5 +1,7 @@
 import type { BasesAllOptions, Plugin } from 'obsidian';
 import {
+	ALLOW_OVERRIDES_OPTION_KEY,
+	DEFAULT_ALLOW_OVERRIDES,
 	DEFAULT_FILE_SEPARATOR,
 	DEFAULT_LINE_SEPARATOR,
 	DEFAULT_EXPORT_FILE,
@@ -119,6 +121,12 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 				key: STRIP_LINKS_OPTION_KEY,
 				displayName: 'Strip links',
 				default: DEFAULT_STRIP_LINKS,
+			},
+			{
+				type: 'toggle',
+				key: ALLOW_OVERRIDES_OPTION_KEY,
+				displayName: 'Allow overrides',
+				default: DEFAULT_ALLOW_OVERRIDES,
 			},
 		],
 	},

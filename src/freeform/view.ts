@@ -38,6 +38,7 @@ export const TEMPLATE_OPTION_KEY = 'template';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
+export const ALLOW_OVERRIDES_OPTION_KEY = 'allowOverrides';
 export const DEFAULT_EXPORT_FOLDER_OPTION_KEY = 'defaultExportFolder';
 export const DEFAULT_EXPORT_FILE_OPTION_KEY = 'defaultExportFile';
 export const EXPORT_TYPE_OPTION_KEY = 'exportType';
@@ -51,6 +52,7 @@ export const OPEN_FILE_AFTER_EXPORT_OPTION_KEY = 'openFileAfterExport';
 export const DEFAULT_FILE_SEPARATOR = '---';
 export const DEFAULT_LINE_SEPARATOR = String.raw`\n`;
 export const DEFAULT_SHOW_EXPORT_BUTTON = false;
+export const DEFAULT_ALLOW_OVERRIDES = true;
 export const DEFAULT_EXPORT_FOLDER = '';
 export const DEFAULT_EXPORT_FILE = 'export.md';
 export const DEFAULT_EXPORT_TYPE = 'markdown';
@@ -476,6 +478,13 @@ export class FreeformView extends BasesView {
 		);
 	}
 
+	private getAllowOverrides(): boolean {
+		return this.getBooleanOption(
+			ALLOW_OVERRIDES_OPTION_KEY,
+			DEFAULT_ALLOW_OVERRIDES,
+		);
+	}
+
 	private createOutputPreview(groupName: string): HTMLElement {
 		const outputEl = this.rootEl.createDiv({
 			cls: 'mark-base-freeform__output',
@@ -500,9 +509,30 @@ export class FreeformView extends BasesView {
 			text: 'Export',
 		});
 		buttonEl.addEventListener('click', () => {
+			const options = this.getExportOptions();
+			if (!this.getAllowOverrides()) {
+				buttonEl.disabled = true;
+				void this.exportMarkdown(options)
+					.catch((error: unknown) => {
+						console.error(
+							'MarkBase could not export the Freeform view.',
+							error,
+						);
+						new Notice(
+							error instanceof Error
+								? error.message
+								: 'Unable to export this Freeform view.',
+						);
+					})
+					.finally(() => {
+						buttonEl.disabled = false;
+					});
+				return;
+			}
+
 			new ExportModal(
 				this.app,
-				this.getExportOptions(),
+				options,
 				(options) => this.exportMarkdown(options),
 			).open();
 		});
