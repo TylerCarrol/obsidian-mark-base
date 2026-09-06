@@ -3,4 +3,5 @@ tags:
   - chapter
 title: The Second One
 chapter: 2
+book: "[[Book 1]]"
 ---

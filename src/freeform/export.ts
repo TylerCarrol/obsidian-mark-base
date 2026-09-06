@@ -27,7 +27,9 @@ export function getExportFileName(file: string, groupName?: string): string {
 		: trimmedFile.length;
 	const stem = sanitizeFileName(trimmedFile.slice(0, extensionIndex));
 	const suffix =
-		groupName === undefined ? '' : `-${sanitizeFileName(groupName)}`;
+		groupName === undefined
+			? ''
+			: `-${sanitizeFileName(stripLinkMarkup(groupName))}`;
 
 	return `${stem}${suffix}.md`;
 }

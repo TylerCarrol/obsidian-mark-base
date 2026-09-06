@@ -78,7 +78,7 @@ export class ExportModal extends Modal {
 			this.contentEl,
 			'Open file after export',
 			'openFileAfterExport',
-			'Opens the first file when exporting multiple groups.',
+			'Opens each exported file in a separate tab.',
 		);
 
 		new Setting(this.contentEl)

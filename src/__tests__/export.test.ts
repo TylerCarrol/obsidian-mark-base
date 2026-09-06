@@ -103,6 +103,9 @@ describe('export destinations', () => {
 		expect(getExportFileName('draft.md', 'Status: In progress')).toBe(
 			'draft-Status- In progress.md',
 		);
+		expect(
+			getExportFileName('draft.md', '[[People/Ada Lovelace|Ada Lovelace]]'),
+		).toBe('draft-Ada Lovelace.md');
 		expect(getExportFileName('../draft.md', '')).toBe(
 			'..-draft-Ungrouped.md',
 		);

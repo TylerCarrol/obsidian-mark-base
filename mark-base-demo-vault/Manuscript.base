@@ -10,6 +10,9 @@ formulas:
 views:
   - type: freeform
     name: Manuscript
+    groupBy:
+      property: book
+      direction: ASC
     order:
       - formula.ExportTitleOrContents
       - file.contents
@@ -29,3 +32,32 @@ views:
     exportType: markdown
     groupByCreatesSeparateOutputFiles: true
     openFileAfterExport: true
+  - type: table
+    name: Table
+    groupBy:
+      property: book
+      direction: ASC
+    order:
+      - file.name
+      - book
+      - chapter
+      - scene
+      - title
+    sort:
+      - property: formula.ExportOrder
+        direction: ASC
+    separator: ""
+    lineSeparator: ""
+    stripYamlFrontmatter: true
+    stripComments: true
+    trimWhitespace: true
+    stripLinks: true
+    showExportButton: true
+    allowOverrides: true
+    defaultExportFolder: Outputs
+    defaultExportFile: Export.md
+    exportType: markdown
+    groupByCreatesSeparateOutputFiles: true
+    openFileAfterExport: true
+    columnSize:
+      file.name: 142

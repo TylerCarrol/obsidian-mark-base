@@ -665,8 +665,10 @@ export class FreeformView extends BasesView {
 				);
 			}
 		}
-		if (options.openFileAfterExport && exportedFiles[0]) {
-			await this.app.workspace.getLeaf('tab').openFile(exportedFiles[0]);
+		if (options.openFileAfterExport) {
+			for (const exportedFile of exportedFiles) {
+				await this.app.workspace.getLeaf('tab').openFile(exportedFile);
+			}
 		}
 
 		new Notice(
