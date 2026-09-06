@@ -1,0 +1,6 @@
+---
+tags:
+  - Test
+---
+
+- Test [[Sample]]

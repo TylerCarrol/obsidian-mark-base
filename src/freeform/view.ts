@@ -370,7 +370,6 @@ export class FreeformView extends BasesView {
 		const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
 			? await this.readFileContent(
 					entry,
-					transformOptions.stripYamlFrontmatter,
 					transformOptions.trimWhitespace,
 				)
 			: null;
@@ -413,7 +412,6 @@ export class FreeformView extends BasesView {
 		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
 			? await this.readFileContent(
 					entry,
-					transformOptions.stripYamlFrontmatter,
 					transformOptions.trimWhitespace,
 				)
 			: null;
@@ -523,13 +521,10 @@ export class FreeformView extends BasesView {
 
 	private async readFileContent(
 		entry: BasesEntry,
-		stripYamlFrontmatter: boolean,
 		trimWhitespace: boolean,
 	): Promise<string> {
 		const content = await this.app.vault.cachedRead(entry.file);
-		const markdown = stripYamlFrontmatter
-			? extractMarkdownBody(content)
-			: content;
+		const markdown = extractMarkdownBody(content);
 		return trimWhitespace
 			? trimFileBoundaryWhitespace(markdown)
 			: markdown;
@@ -892,7 +887,6 @@ export class FreeformView extends BasesView {
 			const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
 				? await this.readFileContent(
 						entry,
-						options.stripYamlFrontmatter,
 						trimFileWhitespace,
 					)
 				: null;
@@ -912,7 +906,6 @@ export class FreeformView extends BasesView {
 		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
 			? await this.readFileContent(
 					entry,
-					options.stripYamlFrontmatter,
 					trimFileWhitespace,
 				)
 			: null;

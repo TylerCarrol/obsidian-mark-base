@@ -1,0 +1,10 @@
+views:
+  - type: freeform
+    name: Freeform
+    filters:
+      and:
+        - file.hasTag("Test")
+    order:
+      - file.links
+      - file.contents
+    stripLinks: false
