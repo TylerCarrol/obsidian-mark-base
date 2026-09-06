@@ -1,5 +1,6 @@
 import {
 	BasesView,
+	BooleanValue,
 	Component,
 	Keymap,
 	MarkdownRenderer,
@@ -66,6 +67,99 @@ export const DEFAULT_STRIP_LINKS = false;
 export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
 export const DEFAULT_OPEN_FILE_AFTER_EXPORT = false;
 export const DEFAULT_ADD_FILE_CONTENTS = false;
+
+function stringifyGroupValue(value: unknown): string {
+	if (value === undefined || value === null) {
+		return '';
+	}
+	if (typeof value === 'string') {
+		return value;
+	}
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return String(value);
+	}
+	return String((value as { toString(): string }).toString());
+}
+
+function isBooleanGroupValue(value: unknown): boolean {
+	if (typeof value === 'boolean' || value instanceof BooleanValue) {
+		return true;
+	}
+	if (typeof value !== 'string') {
+		return false;
+	}
+	const normalized = value.trim().toLowerCase();
+	return normalized === 'true' || normalized === 'false';
+}
+
+function getBooleanGroupValue(value: unknown): boolean {
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	if (value instanceof BooleanValue) {
+		return value.isTruthy();
+	}
+	return String(value).trim().toLowerCase() === 'true';
+}
+
+function renderGroupValue(
+	container: HTMLElement,
+	app: FreeformView['app'],
+	sourcePath: string,
+	value: unknown,
+): void {
+	if (isBooleanGroupValue(value)) {
+		const checkbox = container.createEl('input', {
+			cls: 'mark-base-freeform__group-checkbox',
+			attr: { type: 'checkbox' },
+		});
+		checkbox.checked = getBooleanGroupValue(value);
+		checkbox.disabled = true;
+		return;
+	}
+
+	const stringValue = stringifyGroupValue(value);
+	const linkPattern = /\[\[([^\]|#]+)(?:#([^\]|]+))?(?:\|([^\]]+))?\]\]|\[([^\]]+)\]\(([^)]+)\)/g;
+	let cursor = 0;
+	let match: RegExpExecArray | null;
+	while ((match = linkPattern.exec(stringValue)) !== null) {
+		if (match.index > cursor) {
+			container.createSpan({ text: stringValue.slice(cursor, match.index) });
+		}
+
+		const target = match[1] ?? match[5] ?? '';
+		const label = match[3] ?? match[4] ?? match[1] ?? '';
+		if (/^https?:\/\//i.test(target)) {
+			container.createEl('a', {
+				text: label,
+				href: target,
+				attr: { target: '_blank', rel: 'noopener noreferrer' },
+			});
+		} else {
+			const linkTarget = match[1]
+				? `${match[1]}${match[2] ? `#${match[2]}` : ''}`
+				: target;
+			const file = app.metadataCache.getFirstLinkpathDest(target, sourcePath);
+			if (file) {
+				const link = container.createEl('a', {
+					cls: 'internal-link',
+					text: label,
+				});
+				link.setAttribute('data-href', linkTarget);
+			} else {
+				container.createSpan({ text: label });
+			}
+		}
+		cursor = match.index + match[0].length;
+	}
+
+	if (cursor < stringValue.length) {
+		container.createSpan({ text: stringValue.slice(cursor) });
+	}
+	if (cursor === 0 && stringValue.length === 0) {
+		container.createSpan({ text: 'No value' });
+	}
+}
 
 export class FreeformView extends BasesView {
 	readonly type = FREEFORM_VIEW_TYPE;
@@ -205,13 +299,21 @@ export class FreeformView extends BasesView {
 		const outputGroups = renderSeparateOutputs
 			? groupedData.map((group) => ({
 					entries: group.entries,
-					name: group.key?.toString() ?? 'Ungrouped',
+					name: stringifyGroupValue(group.key) || 'Ungrouped',
+					key: group.key,
 				}))
 			: [{ entries, name: null }];
+		const groupPropertyLabel = renderSeparateOutputs
+			? this.getGroupPropertyLabel(groupedData, entries)
+			: null;
 
 		for (const group of outputGroups) {
 			const outputEl = group.name !== null
-				? this.createOutputPreview(group.name)
+				? this.createOutputPreview(
+						groupPropertyLabel ?? 'Group',
+						group.key,
+						group.entries[0]?.file.path ?? '',
+					)
 				: this.rootEl;
 
 			for (const [index, entry] of group.entries.entries()) {
@@ -508,14 +610,65 @@ export class FreeformView extends BasesView {
 		);
 	}
 
-	private createOutputPreview(groupName: string): HTMLElement {
+	private getGroupPropertyLabel(
+		groups: Array<{
+			key?: unknown;
+			hasKey?: () => boolean;
+			entries: BasesEntry[];
+		}>,
+		entries: BasesEntry[],
+	): string {
+		const candidateProperties = [
+			...this.data.properties,
+			...this.allProperties,
+		].filter((propertyId, index, array) => array.indexOf(propertyId) === index);
+		let bestProperty: BasesPropertyId | undefined;
+		let bestScore = 0;
+
+		for (const propertyId of candidateProperties) {
+			let score = 0;
+			for (const group of groups) {
+				if (!group.hasKey?.() || group.key === undefined || group.key === null) {
+					continue;
+				}
+				const groupValue = stringifyGroupValue(group.key);
+				if (
+					group.entries?.some(
+						(entry) => entry.getValue(propertyId)?.toString() === groupValue,
+					)
+				) {
+					score++;
+				}
+			}
+			if (score > bestScore) {
+				bestProperty = propertyId;
+				bestScore = score;
+			}
+		}
+
+		return bestProperty
+			? this.config.getDisplayName(bestProperty)
+			: this.data.properties[0]
+				? this.config.getDisplayName(this.data.properties[0])
+				: entries.length > 0
+					? 'Group'
+					: 'Group';
+	}
+
+	private createOutputPreview(
+		propertyLabel: string,
+		groupValue: unknown,
+		sourcePath: string,
+	): HTMLElement {
 		const outputEl = this.rootEl.createDiv({
 			cls: 'mark-base-freeform__output',
+			attr: { [SOURCE_PATH_ATTRIBUTE]: sourcePath },
 		});
-		outputEl.createDiv({
+		const headerEl = outputEl.createDiv({
 			cls: 'mark-base-freeform__output-name',
-			text: groupName,
 		});
+		headerEl.createSpan({ text: `${propertyLabel} ` });
+		renderGroupValue(headerEl, this.app, sourcePath, groupValue);
 		return outputEl;
 	}
 

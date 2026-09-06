@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Opening files after export now opens every exported group in a separate tab.
 - Grouped export filenames now remove wikilink markup from group names.
+- Grouped Freeform output headers now show the property name and render boolean
+  and link values like built-in group-by views.
 
 ## [0.3.2] - 2026-09-06
 

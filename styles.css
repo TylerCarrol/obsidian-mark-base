@@ -74,8 +74,15 @@
 }
 
 .mark-base-freeform__output-name {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-1);
 	margin-block-end: var(--size-4-4);
 	color: var(--text-muted);
 	font-size: var(--font-ui-small);
 	font-weight: var(--font-semibold);
+}
+
+.mark-base-freeform__group-checkbox {
+	margin: 0;
 }
