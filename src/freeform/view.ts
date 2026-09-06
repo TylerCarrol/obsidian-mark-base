@@ -12,6 +12,7 @@ import {
 	type QueryController,
 } from 'obsidian';
 import {
+	appendFileContentsProperty,
 	buildOrderedEntryMarkdown,
 	escapeLeadingFrontmatter,
 	expandEscapedNewlines,
@@ -23,6 +24,7 @@ import {
 	SOURCE_PATH_ATTRIBUTE,
 	trimFileBoundaryWhitespace,
 } from './content';
+import { parseDocument } from 'yaml';
 import {
 	type ExportOptions,
 	type ExportTransformOptions,
@@ -35,6 +37,7 @@ import { interpolateTemplate } from './template';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
 export const TEMPLATE_OPTION_KEY = 'template';
+export const ADD_FILE_CONTENTS_OPTION_KEY = 'addFileContents';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
@@ -62,6 +65,7 @@ export const DEFAULT_TRIM_WHITESPACE = false;
 export const DEFAULT_STRIP_LINKS = false;
 export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
 export const DEFAULT_OPEN_FILE_AFTER_EXPORT = false;
+export const DEFAULT_ADD_FILE_CONTENTS = false;
 
 export class FreeformView extends BasesView {
 	readonly type = FREEFORM_VIEW_TYPE;
@@ -69,6 +73,7 @@ export class FreeformView extends BasesView {
 	private readonly rootEl: HTMLElement;
 	private renderComponent: Component | null = null;
 	private renderGeneration = 0;
+	private fileContentsUpdateInProgress = false;
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -106,6 +111,24 @@ export class FreeformView extends BasesView {
 	}
 
 	onDataUpdated(): void {
+		if (
+			this.getBooleanOption(ADD_FILE_CONTENTS_OPTION_KEY, false) &&
+			!this.fileContentsUpdateInProgress
+		) {
+			this.config.set(ADD_FILE_CONTENTS_OPTION_KEY, false);
+			this.fileContentsUpdateInProgress = true;
+			void this.addFileContentsToBaseOrder()
+				.catch((error: unknown) => {
+					new Notice(
+						error instanceof Error
+							? error.message
+							: 'Unable to add file contents to the property order.',
+					);
+				})
+				.finally(() => {
+					this.fileContentsUpdateInProgress = false;
+				});
+		}
 		this.requestRender();
 	}
 
@@ -496,7 +519,7 @@ export class FreeformView extends BasesView {
 		return outputEl;
 	}
 
-	private renderExportButton(): void {
+	private renderActionBar(): void {
 		if (!this.getShowExportButton()) {
 			return;
 		}
@@ -504,38 +527,85 @@ export class FreeformView extends BasesView {
 		const barEl = this.rootEl.createDiv({
 			cls: 'mark-base-freeform__export-bar',
 		});
-		const buttonEl = barEl.createEl('button', {
-			cls: 'mark-base-freeform__export-button',
-			text: 'Export',
-		});
-		buttonEl.addEventListener('click', () => {
-			const options = this.getExportOptions();
-			if (!this.getAllowOverrides()) {
-				buttonEl.disabled = true;
-				void this.exportMarkdown(options)
-					.catch((error: unknown) => {
-						console.error(
-							'MarkBase could not export the Freeform view.',
-							error,
-						);
-						new Notice(
-							error instanceof Error
-								? error.message
-								: 'Unable to export this Freeform view.',
-						);
-					})
-					.finally(() => {
-						buttonEl.disabled = false;
-					});
-				return;
-			}
+		if (this.getShowExportButton()) {
+			const buttonEl = barEl.createEl('button', {
+				cls: 'mark-base-freeform__export-button',
+				text: 'Export',
+			});
+			buttonEl.addEventListener('click', () => {
+				const options = this.getExportOptions();
+				if (!this.getAllowOverrides()) {
+					buttonEl.disabled = true;
+					void this.exportMarkdown(options)
+						.catch((error: unknown) => {
+							console.error(
+								'MarkBase could not export the Freeform view.',
+								error,
+							);
+							new Notice(
+								error instanceof Error
+									? error.message
+									: 'Unable to export this Freeform view.',
+							);
+						})
+						.finally(() => {
+							buttonEl.disabled = false;
+						});
+					return;
+				}
 
-			new ExportModal(
-				this.app,
-				options,
-				(options) => this.exportMarkdown(options),
-			).open();
-		});
+				new ExportModal(
+					this.app,
+					options,
+					(options) => this.exportMarkdown(options),
+				).open();
+			});
+		}
+
+	}
+
+	private async addFileContentsToBaseOrder(): Promise<void> {
+		await this.updateFileContentsInBaseOrder();
+	}
+
+	private async updateFileContentsInBaseOrder(): Promise<void> {
+		const activeFile = this.app.workspace.getActiveFile();
+		if (!activeFile || activeFile.extension.toLowerCase() !== 'base') {
+			throw new Error('Open the Base file that contains this Freeform view first.');
+		}
+
+		const document = parseDocument(await this.app.vault.read(activeFile));
+		const views = document.get('views');
+		if (
+			!views ||
+			typeof views !== 'object' ||
+			!('items' in views) ||
+			!Array.isArray(views.items)
+		) {
+			throw new Error('The active Base file has no views.');
+		}
+
+		const baseConfig = document.toJSON() as {
+			views?: Array<{ type?: unknown; name?: unknown }>;
+		};
+		const viewIndex = baseConfig.views?.findIndex(
+			(view) =>
+				view.type === FREEFORM_VIEW_TYPE &&
+				view.name === this.config.name,
+		);
+		if (viewIndex === undefined || viewIndex === -1) {
+			throw new Error('The current Freeform view was not found in the Base file.');
+		}
+
+		const propertyOrder = resolvePropertyOrder(
+			this.config.getOrder(),
+			this.data.properties,
+		);
+		document.setIn(
+			['views', viewIndex, 'order'],
+			appendFileContentsProperty(propertyOrder),
+		);
+		await this.app.vault.modify(activeFile, document.toString());
 	}
 
 	private async exportMarkdown(options: ExportOptions): Promise<void> {
@@ -763,7 +833,7 @@ export class FreeformView extends BasesView {
 	private resetSurface(): void {
 		this.clearRenderComponent();
 		this.rootEl.empty();
-		this.renderExportButton();
+		this.renderActionBar();
 	}
 
 	private clearRenderComponent(): void {

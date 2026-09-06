@@ -1,7 +1,9 @@
 import type { BasesAllOptions, Plugin } from 'obsidian';
 import {
 	ALLOW_OVERRIDES_OPTION_KEY,
+	ADD_FILE_CONTENTS_OPTION_KEY,
 	DEFAULT_ALLOW_OVERRIDES,
+	DEFAULT_ADD_FILE_CONTENTS,
 	DEFAULT_FILE_SEPARATOR,
 	DEFAULT_LINE_SEPARATOR,
 	DEFAULT_EXPORT_FILE,
@@ -52,6 +54,12 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 		displayName: 'Line separator',
 		default: DEFAULT_LINE_SEPARATOR,
 		placeholder: String.raw`Markdown between properties; use \n\n for a blank line`,
+	},
+	{
+		type: 'toggle',
+		key: ADD_FILE_CONTENTS_OPTION_KEY,
+		displayName: 'Add file contents (one-shot button)',
+		default: DEFAULT_ADD_FILE_CONTENTS,
 	},
 	{
 		type: 'group',

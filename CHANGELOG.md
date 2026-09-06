@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a Freeform one-shot setting button that adds file contents to the property list.
+
 ## [0.3.1] - 2026-09-05
 
 ### Fixed

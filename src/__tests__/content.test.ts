@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	appendFileContentsProperty,
 	buildOrderedEntryMarkdown,
 	escapeLeadingFrontmatter,
 	expandEscapedNewlines,
@@ -62,6 +63,17 @@ describe('includeFileContentsProperty', () => {
 				FILE_CONTENTS_PROPERTY_ID,
 			]),
 		).toEqual(['file.name', FILE_CONTENTS_PROPERTY_ID]);
+	});
+});
+
+describe('appendFileContentsProperty', () => {
+	it('moves file.contents to the end of the property order', () => {
+		expect(
+			appendFileContentsProperty([
+				FILE_CONTENTS_PROPERTY_ID,
+				'formula.title',
+			]),
+		).toEqual(['formula.title', FILE_CONTENTS_PROPERTY_ID]);
 	});
 });
 

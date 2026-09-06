@@ -35,6 +35,17 @@ export function includeFileContentsProperty(
 	return [...properties, FILE_CONTENTS_PROPERTY_ID];
 }
 
+export function appendFileContentsProperty(
+	properties: BasesPropertyId[],
+): BasesPropertyId[] {
+	return [
+		...properties.filter(
+			(propertyId) => propertyId !== FILE_CONTENTS_PROPERTY_ID,
+		),
+		FILE_CONTENTS_PROPERTY_ID,
+	];
+}
+
 export function buildOrderedEntryMarkdown(
 	properties: OrderedEntryProperty[],
 	filePath: string,

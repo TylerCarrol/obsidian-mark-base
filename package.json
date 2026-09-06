@@ -31,5 +31,8 @@
 	},
 	"allowScripts": {
 		"esbuild@0.25.5": true
+	},
+	"dependencies": {
+		"yaml": "^2.9.0"
 	}
 }

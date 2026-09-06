@@ -21,6 +21,7 @@ views:
     separator: ---
     lineSeparator: \n\n
     template: ""
+    addFileContents: false
   - type: freeform
     name: Profiles (Template)
     order: []
