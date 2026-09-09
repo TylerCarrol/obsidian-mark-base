@@ -21,6 +21,7 @@ import {
 	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
 	includeFileContentsProperty,
+	replaceMarkdownBody,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
 	trimFileBoundaryWhitespace,
@@ -39,6 +40,7 @@ import { interpolateTemplate } from './template';
 export const FREEFORM_VIEW_TYPE = 'freeform';
 export const TEMPLATE_OPTION_KEY = 'template';
 export const ADD_FILE_CONTENTS_OPTION_KEY = 'addFileContents';
+export const ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY = 'enableFileContentsEditing';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
@@ -67,6 +69,7 @@ export const DEFAULT_STRIP_LINKS = false;
 export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
 export const DEFAULT_OPEN_FILE_AFTER_EXPORT = false;
 export const DEFAULT_ADD_FILE_CONTENTS = false;
+export const DEFAULT_ENABLE_FILE_CONTENTS_EDITING = false;
 
 function stringifyGroupValue(value: unknown): string {
 	if (value === undefined || value === null) {
@@ -168,6 +171,7 @@ export class FreeformView extends BasesView {
 	private renderComponent: Component | null = null;
 	private renderGeneration = 0;
 	private fileContentsUpdateInProgress = false;
+	private readonly fileContentsEditsInProgress = new Set<string>();
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -193,6 +197,9 @@ export class FreeformView extends BasesView {
 		});
 		this.registerEvent(
 			this.app.vault.on('modify', (file) => {
+					if (this.fileContentsEditsInProgress.delete(file.path)) {
+						return;
+					}
 				const isDisplayedFile = this.data.data.some(
 					(entry) => entry.file.path === file.path,
 				);
@@ -430,10 +437,34 @@ export class FreeformView extends BasesView {
 			transformOptions,
 			{ trimStart, trimEnd },
 		);
+		const editingFileContents =
+			this.getBooleanOption(
+				ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY,
+				DEFAULT_ENABLE_FILE_CONTENTS_EDITING,
+			) && propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID);
 		const entryEl = outputEl.createDiv({
-			cls: 'mark-base-freeform__entry',
+			cls: [
+				'mark-base-freeform__entry',
+				...(editingFileContents
+					? ['mark-base-freeform__entry--editable']
+					: []),
+			],
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
+
+		if (editingFileContents) {
+			await this.renderEditableOrderedEntry(
+				propertyOrder,
+				entry,
+				entryEl,
+				renderComponent,
+				transformOptions,
+				trimStart,
+				trimEnd,
+			);
+			return;
+		}
+
 		this.renderLeadingNewlines(entryEl, markdown);
 
 		if (!markdown) {
@@ -447,6 +478,163 @@ export class FreeformView extends BasesView {
 			entry.file.path,
 			renderComponent,
 		);
+	}
+
+	private async renderEditableOrderedEntry(
+		propertyOrder: BasesPropertyId[],
+		entry: BasesEntry,
+		entryEl: HTMLElement,
+		renderComponent: Component,
+		transformOptions: ExportTransformOptions,
+		trimStart: boolean,
+		trimEnd: boolean,
+	): Promise<void> {
+		const fileContent = await this.app.vault.cachedRead(entry.file);
+		const body = extractMarkdownBody(fileContent);
+
+		for (const propertyId of propertyOrder) {
+			if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
+				await this.renderEditableFileContents(
+					entryEl,
+					body,
+					fileContent,
+					entry,
+					renderComponent,
+					transformOptions,
+					entryEl.childElementCount > 0,
+				);
+				continue;
+			}
+
+			const markdown = transformExportMarkdown(
+				buildOrderedEntryMarkdown(
+					[{ propertyId, value: entry.getValue(propertyId) }],
+					entry.file.path,
+					this.getLineSeparator(),
+				),
+				transformOptions,
+				{ trimStart, trimEnd },
+			);
+			if (!markdown) {
+				continue;
+			}
+
+			await MarkdownRenderer.render(
+				this.app,
+				markdown,
+				entryEl,
+				entry.file.path,
+				renderComponent,
+			);
+		}
+	}
+
+	private async renderEditableFileContents(
+		entryEl: HTMLElement,
+		body: string,
+		fileContent: string,
+		entry: BasesEntry,
+		renderComponent: Component,
+		transformOptions: ExportTransformOptions,
+		afterProperty: boolean,
+	): Promise<void> {
+		const contentsEl = entryEl.createDiv({
+			cls: [
+				'mark-base-freeform__contents',
+				...(afterProperty
+					? ['mark-base-freeform__contents--after-property']
+					: []),
+			],
+		});
+		const blocks = body
+			.replace(/^(?:\r?\n)+/, '')
+			.split(/\r?\n\s*\r?\n/);
+
+		for (const index of blocks.keys()) {
+			const blockEl = contentsEl.createDiv({
+				cls: 'mark-base-freeform__contents-block',
+			});
+			await this.renderEditableFileContentsBlock(
+				blockEl,
+				blocks,
+				index,
+				fileContent,
+				entry,
+				renderComponent,
+				transformOptions,
+			);
+		}
+	}
+
+	private async renderEditableFileContentsBlock(
+		blockEl: HTMLElement,
+		blocks: string[],
+		index: number,
+		fileContent: string,
+		entry: BasesEntry,
+		renderComponent: Component,
+		transformOptions: ExportTransformOptions,
+	): Promise<void> {
+		const previewMarkdown = transformExportMarkdown(
+			blocks[index] ?? '',
+			transformOptions,
+		);
+		blockEl.empty();
+		await MarkdownRenderer.render(
+			this.app,
+			previewMarkdown,
+			blockEl,
+			entry.file.path,
+			renderComponent,
+		);
+		if (blockEl.dataset.markBaseEditableBlock === 'true') {
+			return;
+		}
+		blockEl.dataset.markBaseEditableBlock = 'true';
+		this.registerDomEvent(blockEl, 'click', (event) => {
+			if ((event.target as HTMLElement).closest('[contenteditable="true"]')) {
+				return;
+			}
+			if ((event.target as HTMLElement).closest('a')) {
+				return;
+			}
+
+			blockEl.empty();
+			const sourceEl = blockEl.createDiv({
+				cls: 'mark-base-freeform__contents-source',
+				attr: {
+					contenteditable: 'true',
+					'aria-label': 'File contents',
+				},
+			});
+			sourceEl.textContent = blocks[index] ?? '';
+			sourceEl.focus();
+			this.registerDomEvent(sourceEl, 'input', () => {
+				blocks[index] = sourceEl.textContent ?? '';
+				this.fileContentsEditsInProgress.add(entry.file.path);
+				void this.app.vault
+					.modify(entry.file, replaceMarkdownBody(fileContent, blocks.join('\n\n')))
+					.catch((error: unknown) => {
+						this.fileContentsEditsInProgress.delete(entry.file.path);
+						new Notice(
+							error instanceof Error
+								? error.message
+								: 'Unable to save file contents.',
+						);
+					});
+			});
+			this.registerDomEvent(sourceEl, 'blur', () => {
+				void this.renderEditableFileContentsBlock(
+					blockEl,
+					blocks,
+					index,
+					fileContent,
+					entry,
+					renderComponent,
+					transformOptions,
+				);
+			});
+		});
 	}
 
 	private renderLeadingNewlines(

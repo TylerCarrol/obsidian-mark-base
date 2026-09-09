@@ -21,6 +21,11 @@ export function extractMarkdownBody(fileContent: string): string {
 	return fileContent.replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, '');
 }
 
+export function replaceMarkdownBody(fileContent: string, body: string): string {
+	const frontmatter = fileContent.match(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*/)?.[0];
+	return frontmatter ? `${frontmatter}${body}` : body;
+}
+
 export function trimFileBoundaryWhitespace(fileContent: string): string {
 	return fileContent.trim();
 }

@@ -2,8 +2,10 @@ import type { BasesAllOptions, Plugin } from 'obsidian';
 import {
 	ALLOW_OVERRIDES_OPTION_KEY,
 	ADD_FILE_CONTENTS_OPTION_KEY,
+	ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY,
 	DEFAULT_ALLOW_OVERRIDES,
 	DEFAULT_ADD_FILE_CONTENTS,
+	DEFAULT_ENABLE_FILE_CONTENTS_EDITING,
 	DEFAULT_FILE_SEPARATOR,
 	DEFAULT_LINE_SEPARATOR,
 	DEFAULT_EXPORT_FILE,
@@ -60,6 +62,12 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 		key: ADD_FILE_CONTENTS_OPTION_KEY,
 		displayName: 'Add file contents (one-shot button)',
 		default: DEFAULT_ADD_FILE_CONTENTS,
+	},
+	{
+		type: 'toggle',
+		key: ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY,
+		displayName: 'Enable file contents editing',
+		default: DEFAULT_ENABLE_FILE_CONTENTS_EDITING,
 	},
 	{
 		type: 'group',

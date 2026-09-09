@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added an "Enable file contents editing" Freeform view setting that saves
+  edits to `file.contents` directly to the source note.
+
 ## [0.3.4] - 2026-09-06
 
 ### Fixed

@@ -10,6 +10,7 @@ import {
 	includeFileContentsProperty,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
+	replaceMarkdownBody,
 	trimFileBoundaryWhitespace,
 } from '../freeform/content';
 
@@ -34,6 +35,18 @@ describe('extractMarkdownBody', () => {
 
 	it('preserves content when the file has no frontmatter', () => {
 		expect(extractMarkdownBody('# Body\n\nText')).toBe('# Body\n\nText');
+	});
+});
+
+describe('replaceMarkdownBody', () => {
+	it('preserves YAML frontmatter while replacing the body', () => {
+		expect(
+			replaceMarkdownBody('---\ntitle: Draft\n---\n\nOld body', '\n\nNew body'),
+		).toBe('---\ntitle: Draft\n---\n\nNew body');
+	});
+
+	it('replaces the full file when frontmatter is absent', () => {
+		expect(replaceMarkdownBody('Old body', 'New body')).toBe('New body');
 	});
 });
 

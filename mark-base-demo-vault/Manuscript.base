@@ -19,6 +19,32 @@ views:
     sort:
       - property: formula.ExportOrder
         direction: ASC
+    enableFileContentsEditing: false
+    separator: ""
+    lineSeparator: ""
+    stripYamlFrontmatter: true
+    stripComments: true
+    trimWhitespace: true
+    stripLinks: true
+    showExportButton: true
+    allowOverrides: true
+    defaultExportFolder: Outputs
+    defaultExportFile: Export.md
+    exportType: markdown
+    groupByCreatesSeparateOutputFiles: true
+    openFileAfterExport: true
+  - type: freeform
+    name: Manuscript (Editable)
+    groupBy:
+      property: book
+      direction: ASC
+    order:
+      - formula.ExportTitleOrContents
+      - file.contents
+    sort:
+      - property: formula.ExportOrder
+        direction: ASC
+    enableFileContentsEditing: true
     separator: ""
     lineSeparator: ""
     stripYamlFrontmatter: true
