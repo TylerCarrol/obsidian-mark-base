@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-09
+
 ### Added
 
 - Added an "Enable file contents editing" Freeform view setting that saves
@@ -100,7 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Freeform Bases view with Markdown templates, property and formula
   placeholders, configurable separators, and demo vault content.
 
-[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.4.0...HEAD
+
+[0.4.0]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.4...v0.4.0
 
 [0.3.4]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.3.3...v0.3.4
 
