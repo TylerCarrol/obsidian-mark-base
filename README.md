@@ -1,6 +1,10 @@
 # MarkBase for Obsidian
 
-[![GitHub Release](https://img.shields.io/github/v/release/TylerCarrol/obsidian-mark-base?logo=github&sort=semver)](https://github.com/TylerCarrol/obsidian-mark-base/releases/latest) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/TylerCarrol/obsidian-mark-base/blob/main/LICENSE) [![Lint](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml) [![Test](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/TylerCarrol/obsidian-mark-base?logo=github&sort=semver)](https://github.com/TylerCarrol/obsidian-mark-base/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/TylerCarrol/obsidian-mark-base/blob/main/LICENSE)
+[![Lint](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/lint.yml)
+[![Test](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml/badge.svg)](https://github.com/TylerCarrol/obsidian-mark-base/actions/workflows/test.yml)
+[![Scc Count Badge](https://sloc.xyz/github/TylerCarrol/obsidian-mark-base?category=code)](https://github.com/TylerCarrol/obsidian-mark-base?category=code)
 [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/tylercarrol)
 
 MarkBase combines **Markdown** and **Obsidian Bases** into one **Freeform** view. Rendering the visible
