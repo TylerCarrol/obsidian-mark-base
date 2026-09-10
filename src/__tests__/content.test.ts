@@ -7,10 +7,14 @@ import {
 	extractMarkdownBody,
 	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
+	getMarkdownBodyBoundaryWhitespace,
+	getMarkdownBodyFrontmatterSeparator,
 	includeFileContentsProperty,
+	removeMarkdownBodyBoundaryWhitespace,
 	resolvePropertyOrder,
 	SOURCE_PATH_ATTRIBUTE,
 	replaceMarkdownBody,
+	restoreMarkdownBodyBoundaryWhitespace,
 	trimFileBoundaryWhitespace,
 } from '../freeform/content';
 
@@ -35,6 +39,13 @@ describe('extractMarkdownBody', () => {
 
 	it('preserves content when the file has no frontmatter', () => {
 		expect(extractMarkdownBody('# Body\n\nText')).toBe('# Body\n\nText');
+	});
+
+	it('identifies the newline consumed after frontmatter', () => {
+		expect(
+			getMarkdownBodyFrontmatterSeparator('---\ntitle: Example\n---\n# Body'),
+		).toBe('\n');
+		expect(getMarkdownBodyFrontmatterSeparator('# Body')).toBe('');
 	});
 });
 
@@ -61,6 +72,28 @@ describe('trimFileBoundaryWhitespace', () => {
 		expect(trimFileBoundaryWhitespace('First\n\nSecond')).toBe(
 			'First\n\nSecond',
 		);
+	});
+});
+
+describe('Markdown body boundary whitespace', () => {
+	it('removes and restores leading and trailing blank lines', () => {
+		const markdown = '\r\n\r\n# Body\r\n\r\n';
+		const whitespace = getMarkdownBodyBoundaryWhitespace(markdown);
+
+		expect(removeMarkdownBodyBoundaryWhitespace(markdown)).toBe('# Body');
+		expect(
+			restoreMarkdownBodyBoundaryWhitespace('# New body', whitespace),
+		).toBe('\r\n\r\n# New body\r\n\r\n');
+	});
+
+	it('does not remove meaningful indentation at the body boundary', () => {
+		const markdown = '  # Body';
+
+		expect(getMarkdownBodyBoundaryWhitespace(markdown)).toEqual({
+			leading: '',
+			trailing: '',
+		});
+		expect(removeMarkdownBodyBoundaryWhitespace(markdown)).toBe('  # Body');
 	});
 });
 
