@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-10
+
 ### Fixed
 
 - Replaced the partially supported `display: contents` editor wrapper with
@@ -125,7 +127,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Freeform Bases view with Markdown templates, property and formula
   placeholders, configurable separators, and demo vault content.
 
-[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.4.2...HEAD
+
+[0.4.2]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.4.1...v0.4.2
 
 [0.4.1]: https://github.com/TylerCarrol/obsidian-mark-base/compare/v0.4.0...v0.4.1
 
