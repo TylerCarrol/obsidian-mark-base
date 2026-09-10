@@ -13,12 +13,26 @@ export interface InternalLinkTarget {
 	sourcePath: string;
 }
 
+export interface MarkdownBodyBoundaryWhitespace {
+	leading: string;
+	trailing: string;
+}
+
 export function expandEscapedNewlines(markdown: string): string {
 	return markdown.replace(/\\+n/g, '\n');
 }
 
 export function extractMarkdownBody(fileContent: string): string {
 	return fileContent.replace(/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/, '');
+}
+
+export function getMarkdownBodyFrontmatterSeparator(fileContent: string): string {
+	const frontmatter = fileContent.match(
+		/^---[ \t]*\r?\n[\s\S]*?\r?\n---[ \t]*/,
+	)?.[0];
+	return frontmatter
+		? fileContent.slice(frontmatter.length).match(/^\r?\n/)?.[0] ?? ''
+		: '';
 }
 
 export function replaceMarkdownBody(fileContent: string, body: string): string {
@@ -28,6 +42,26 @@ export function replaceMarkdownBody(fileContent: string, body: string): string {
 
 export function trimFileBoundaryWhitespace(fileContent: string): string {
 	return fileContent.trim();
+}
+
+export function getMarkdownBodyBoundaryWhitespace(
+	markdown: string,
+): MarkdownBodyBoundaryWhitespace {
+	const leading = markdown.match(/^(?:[ \t]*\r?\n)+/)?.[0] ?? '';
+	const trailing = markdown.match(/(?:\r?\n[ \t]*)+$/)?.[0] ?? '';
+	return { leading, trailing };
+}
+
+export function removeMarkdownBodyBoundaryWhitespace(markdown: string): string {
+	const { leading, trailing } = getMarkdownBodyBoundaryWhitespace(markdown);
+	return markdown.slice(leading.length, markdown.length - trailing.length);
+}
+
+export function restoreMarkdownBodyBoundaryWhitespace(
+	markdown: string,
+	whitespace: MarkdownBodyBoundaryWhitespace,
+): string {
+	return `${whitespace.leading}${markdown}${whitespace.trailing}`;
 }
 
 export function includeFileContentsProperty(
