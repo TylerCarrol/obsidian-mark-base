@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Editable file contents now preserve the original blank lines around the
+  Markdown body when saving changes.
+- Editable file contents now save when focus leaves the editor instead of
+  saving after every character.
+
 ## [0.4.0] - 2026-09-09
 
 ### Added

@@ -20,9 +20,13 @@ import {
 	extractMarkdownBody,
 	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
+	getMarkdownBodyBoundaryWhitespace,
+	getMarkdownBodyFrontmatterSeparator,
 	includeFileContentsProperty,
+	removeMarkdownBodyBoundaryWhitespace,
 	replaceMarkdownBody,
 	resolvePropertyOrder,
+	restoreMarkdownBodyBoundaryWhitespace,
 	SOURCE_PATH_ATTRIBUTE,
 	trimFileBoundaryWhitespace,
 } from './content';
@@ -491,12 +495,19 @@ export class FreeformView extends BasesView {
 	): Promise<void> {
 		const fileContent = await this.app.vault.cachedRead(entry.file);
 		const body = extractMarkdownBody(fileContent);
+		const bodyBoundary = getMarkdownBodyBoundaryWhitespace(body);
+		const bodyBoundaryWhitespace = {
+			leading:
+				getMarkdownBodyFrontmatterSeparator(fileContent) + bodyBoundary.leading,
+			trailing: bodyBoundary.trailing,
+		};
 
 		for (const propertyId of propertyOrder) {
 			if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
 				await this.renderEditableFileContents(
 					entryEl,
-					body,
+					removeMarkdownBodyBoundaryWhitespace(body),
+					bodyBoundaryWhitespace,
 					fileContent,
 					entry,
 					renderComponent,
@@ -532,6 +543,9 @@ export class FreeformView extends BasesView {
 	private async renderEditableFileContents(
 		entryEl: HTMLElement,
 		body: string,
+		bodyBoundaryWhitespace: ReturnType<
+			typeof getMarkdownBodyBoundaryWhitespace
+		>,
 		fileContent: string,
 		entry: BasesEntry,
 		renderComponent: Component,
@@ -558,6 +572,7 @@ export class FreeformView extends BasesView {
 				blockEl,
 				blocks,
 				index,
+				bodyBoundaryWhitespace,
 				fileContent,
 				entry,
 				renderComponent,
@@ -570,6 +585,9 @@ export class FreeformView extends BasesView {
 		blockEl: HTMLElement,
 		blocks: string[],
 		index: number,
+		bodyBoundaryWhitespace: ReturnType<
+			typeof getMarkdownBodyBoundaryWhitespace
+		>,
 		fileContent: string,
 		entry: BasesEntry,
 		renderComponent: Component,
@@ -609,11 +627,51 @@ export class FreeformView extends BasesView {
 			});
 			sourceEl.textContent = blocks[index] ?? '';
 			sourceEl.focus();
+			let hasUnsavedChanges = false;
 			this.registerDomEvent(sourceEl, 'input', () => {
 				blocks[index] = sourceEl.textContent ?? '';
+				hasUnsavedChanges = true;
+			});
+			this.registerDomEvent(sourceEl, 'blur', () => {
+				if (!hasUnsavedChanges) {
+					void this.renderEditableFileContentsBlock(
+						blockEl,
+						blocks,
+						index,
+						bodyBoundaryWhitespace,
+						fileContent,
+						entry,
+						renderComponent,
+						transformOptions,
+					);
+					return;
+				}
+
 				this.fileContentsEditsInProgress.add(entry.file.path);
 				void this.app.vault
-					.modify(entry.file, replaceMarkdownBody(fileContent, blocks.join('\n\n')))
+					.modify(
+						entry.file,
+						replaceMarkdownBody(
+							fileContent,
+							restoreMarkdownBodyBoundaryWhitespace(
+								blocks.join('\n\n'),
+								bodyBoundaryWhitespace,
+							),
+						),
+					)
+					.then(() => {
+						hasUnsavedChanges = false;
+						return this.renderEditableFileContentsBlock(
+							blockEl,
+							blocks,
+							index,
+							bodyBoundaryWhitespace,
+							fileContent,
+							entry,
+							renderComponent,
+							transformOptions,
+						);
+					})
 					.catch((error: unknown) => {
 						this.fileContentsEditsInProgress.delete(entry.file.path);
 						new Notice(
@@ -622,17 +680,6 @@ export class FreeformView extends BasesView {
 								: 'Unable to save file contents.',
 						);
 					});
-			});
-			this.registerDomEvent(sourceEl, 'blur', () => {
-				void this.renderEditableFileContentsBlock(
-					blockEl,
-					blocks,
-					index,
-					fileContent,
-					entry,
-					renderComponent,
-					transformOptions,
-				);
 			});
 		});
 	}
