@@ -18,6 +18,8 @@ document.
 - Follow internal links and select rendered text for copying.
 - Add a multiline Markdown separator between results, or leave it empty.
 - Place each note's Markdown body anywhere in the property order.
+- Edit note bodies with cursor-sensitive Markdown formatting and wikilink
+   suggestions.
 - Optionally override the property layout with a reusable Markdown template.
 - Run entirely inside the vault without network requests.
 
@@ -44,7 +46,11 @@ document.
    option to join results without a separator.
 5. Open the Base properties menu, add `file.contents`, and drag it to where the
    note's Markdown body should render. YAML frontmatter is omitted.
-6. Under **Configure view → Export**, configure the default vault folder and
+6. To edit note bodies in place, enable **Configure view → Enable file contents
+   editing**, then select a rendered note body. Markdown markers appear for
+   the formatting at the caret. Type `[[` to search for notes and insert a
+   wikilink. Changes save when focus leaves the editor.
+7. Under **Configure view → Export**, configure the default vault folder and
    file name for future exports. **Default folder** provides suggestions from
    the folders that already exist in the vault.
 

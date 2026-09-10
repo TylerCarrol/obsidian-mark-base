@@ -6,4 +6,4 @@ scene: 3
 book: "[[Book 1]]"
 ---
 
-This scene has a [[README|link]] to another file.
+This scene has a [[README|link]] to *another* [[Book 1|file]].

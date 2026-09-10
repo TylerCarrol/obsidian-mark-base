@@ -39,6 +39,7 @@ import {
 	transformExportMarkdown,
 } from './export';
 import { ExportModal } from './export-modal';
+import { createLivePreviewEditor } from './live-preview-editor';
 import { interpolateTemplate } from './template';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
@@ -560,31 +561,23 @@ export class FreeformView extends BasesView {
 					: []),
 			],
 		});
-		const blocks = body
-			.replace(/^(?:\r?\n)+/, '')
-			.split(/\r?\n\s*\r?\n/);
-
-		for (const index of blocks.keys()) {
-			const blockEl = contentsEl.createDiv({
-				cls: 'mark-base-freeform__contents-block',
-			});
-			await this.renderEditableFileContentsBlock(
-				blockEl,
-				blocks,
-				index,
-				bodyBoundaryWhitespace,
-				fileContent,
-				entry,
-				renderComponent,
-				transformOptions,
-			);
-		}
+		const bodyEl = contentsEl.createDiv({
+			cls: 'mark-base-freeform__contents-block',
+		});
+		await this.renderEditableFileContentsBody(
+			bodyEl,
+			body,
+			bodyBoundaryWhitespace,
+			fileContent,
+			entry,
+			renderComponent,
+			transformOptions,
+		);
 	}
 
-	private async renderEditableFileContentsBlock(
-		blockEl: HTMLElement,
-		blocks: string[],
-		index: number,
+	private async renderEditableFileContentsBody(
+		bodyEl: HTMLElement,
+		body: string,
 		bodyBoundaryWhitespace: ReturnType<
 			typeof getMarkdownBodyBoundaryWhitespace
 		>,
@@ -594,93 +587,93 @@ export class FreeformView extends BasesView {
 		transformOptions: ExportTransformOptions,
 	): Promise<void> {
 		const previewMarkdown = transformExportMarkdown(
-			blocks[index] ?? '',
+			body,
 			transformOptions,
 		);
-		blockEl.empty();
+		bodyEl.empty();
 		await MarkdownRenderer.render(
 			this.app,
 			previewMarkdown,
-			blockEl,
+			bodyEl,
 			entry.file.path,
 			renderComponent,
 		);
-		if (blockEl.dataset.markBaseEditableBlock === 'true') {
+		if (bodyEl.dataset.markBaseEditableBody === 'true') {
 			return;
 		}
-		blockEl.dataset.markBaseEditableBlock = 'true';
-		this.registerDomEvent(blockEl, 'click', (event) => {
-			if ((event.target as HTMLElement).closest('[contenteditable="true"]')) {
+		bodyEl.dataset.markBaseEditableBody = 'true';
+		this.registerDomEvent(bodyEl, 'click', (event) => {
+			if ((event.target as HTMLElement).closest('.cm-editor')) {
 				return;
 			}
 			if ((event.target as HTMLElement).closest('a')) {
 				return;
 			}
 
-			blockEl.empty();
-			const sourceEl = blockEl.createDiv({
+			bodyEl.empty();
+			const editorEl = bodyEl.createDiv({
 				cls: 'mark-base-freeform__contents-source',
-				attr: {
-					contenteditable: 'true',
-					'aria-label': 'File contents',
-				},
 			});
-			sourceEl.textContent = blocks[index] ?? '';
-			sourceEl.focus();
 			let hasUnsavedChanges = false;
-			this.registerDomEvent(sourceEl, 'input', () => {
-				blocks[index] = sourceEl.textContent ?? '';
-				hasUnsavedChanges = true;
-			});
-			this.registerDomEvent(sourceEl, 'blur', () => {
-				if (!hasUnsavedChanges) {
-					void this.renderEditableFileContentsBlock(
-						blockEl,
-						blocks,
-						index,
-						bodyBoundaryWhitespace,
-						fileContent,
-						entry,
-						renderComponent,
-						transformOptions,
-					);
-					return;
-				}
-
-				this.fileContentsEditsInProgress.add(entry.file.path);
-				void this.app.vault
-					.modify(
-						entry.file,
-						replaceMarkdownBody(
-							fileContent,
-							restoreMarkdownBodyBoundaryWhitespace(
-								blocks.join('\n\n'),
-								bodyBoundaryWhitespace,
-							),
-						),
-					)
-					.then(() => {
-						hasUnsavedChanges = false;
-						return this.renderEditableFileContentsBlock(
-							blockEl,
-							blocks,
-							index,
+			const editor = createLivePreviewEditor({
+				app: this.app,
+				parent: editorEl,
+				value: body,
+				sourcePath: entry.file.path,
+				initialCoordinates: { x: event.clientX, y: event.clientY },
+				onChange: (value) => {
+					body = value;
+					hasUnsavedChanges = true;
+				},
+				onBlur: () => {
+					if (!hasUnsavedChanges) {
+						void this.renderEditableFileContentsBody(
+							bodyEl,
+							body,
 							bodyBoundaryWhitespace,
 							fileContent,
 							entry,
 							renderComponent,
 							transformOptions,
 						);
-					})
-					.catch((error: unknown) => {
-						this.fileContentsEditsInProgress.delete(entry.file.path);
-						new Notice(
-							error instanceof Error
-								? error.message
-								: 'Unable to save file contents.',
-						);
-					});
+						return;
+					}
+
+					this.fileContentsEditsInProgress.add(entry.file.path);
+					void this.app.vault
+						.modify(
+							entry.file,
+							replaceMarkdownBody(
+								fileContent,
+								restoreMarkdownBodyBoundaryWhitespace(
+										body,
+									bodyBoundaryWhitespace,
+								),
+							),
+						)
+						.then(() => {
+							hasUnsavedChanges = false;
+								return this.renderEditableFileContentsBody(
+									bodyEl,
+									body,
+								bodyBoundaryWhitespace,
+								fileContent,
+								entry,
+								renderComponent,
+								transformOptions,
+							);
+						})
+						.catch((error: unknown) => {
+							this.fileContentsEditsInProgress.delete(entry.file.path);
+							new Notice(
+								error instanceof Error
+									? error.message
+									: 'Unable to save file contents.',
+							);
+						});
+				},
 			});
+			renderComponent.register(() => editor.destroy());
 		});
 	}
 

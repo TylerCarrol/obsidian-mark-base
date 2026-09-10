@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Replaced the partially supported `display: contents` editor wrapper with
+  standard block layout for compatibility with Obsidian 1.11.4.
+
+### Changed
+
+- Editable file contents now use a Live Preview-style editor that reveals
+  Markdown syntax at the caret and suggests vault notes while typing wikilinks.
+- Each editable note body now opens in one continuous editor for keyboard
+  navigation across paragraphs.
+- The file contents editor no longer displays a border or surrounding inset.
+- Wikilink suggestions now insert only the note name instead of its vault path.
+
 ## [0.4.1] - 2026-09-10
 
 ### Fixed

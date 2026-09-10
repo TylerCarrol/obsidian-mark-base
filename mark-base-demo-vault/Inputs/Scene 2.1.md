@@ -6,4 +6,4 @@ scene: 1
 book: "[[Book 1]]"
 ---
 
-This is another scene.
+This is another example scene.
