@@ -36,8 +36,9 @@ scene notes in sequence.
 - Under **Configure view → Export**, choose a default vault folder and enter a
   default file name for future exports.
 - Toggle the export cleanup options to preview the resulting Markdown. When a
-  Base is grouped, enable **Group by creates separate output files** to preview
-  each group as a distinct output.
+  Base is grouped and **Show export button** is on, enable
+  **Group by creates separate output files** to preview each group as a distinct
+  output. When **Show export button** is off, the view always shows groups.
 - Add `file.contents` in the Base properties menu and move it to where each
   note's body should render.
 - Select `Templates/Person profile.md` under **Configure view → Template

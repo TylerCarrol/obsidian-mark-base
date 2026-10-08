@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Freeform views now show groups when the export button is off, regardless of
+  the **Group by creates separate output files** setting.
 - Lint fix to remove `text-decoration`.
 
 ## [0.4.2] - 2026-09-10

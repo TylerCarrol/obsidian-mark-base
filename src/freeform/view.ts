@@ -306,7 +306,8 @@ export class FreeformView extends BasesView {
 		const transformOptions = this.getExportTransformOptions();
 		const groupedData = this.data.groupedData;
 		const renderSeparateOutputs =
-			this.getGroupByCreatesSeparateOutputFiles() &&
+			(!this.getShowExportButton() ||
+				this.getGroupByCreatesSeparateOutputFiles()) &&
 			groupedData.some((group) => group.hasKey());
 		const outputGroups = renderSeparateOutputs
 			? groupedData.map((group) => ({
