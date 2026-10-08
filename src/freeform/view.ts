@@ -17,7 +17,6 @@ import {
 	buildOrderedEntryMarkdown,
 	escapeLeadingFrontmatter,
 	expandEscapedNewlines,
-	extractMarkdownBody,
 	FILE_CONTENTS_PROPERTY_ID,
 	getInternalLinkTarget,
 	getMarkdownBodyBoundaryWhitespace,
@@ -28,7 +27,6 @@ import {
 	resolvePropertyOrder,
 	restoreMarkdownBodyBoundaryWhitespace,
 	SOURCE_PATH_ATTRIBUTE,
-	trimFileBoundaryWhitespace,
 } from './content';
 import { parseDocument } from 'yaml';
 import {
@@ -41,7 +39,9 @@ import {
 import { ExportModal } from './export-modal';
 import { createLivePreviewEditor } from './live-preview-editor';
 import { FreeformFolding } from './folding';
-import { interpolateTemplate } from './template';
+import { getTemplateProperties, interpolateTemplate } from './template';
+import { EntryPropertyResolver } from './entry-property-resolver';
+import { ExcerptMetadata } from './excerpt-metadata';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
 export const TEMPLATE_OPTION_KEY = 'template';
@@ -183,6 +183,9 @@ export class FreeformView extends BasesView {
 	private fileContentsUpdateInProgress = false;
 	private readonly fileContentsEditsInProgress = new Set<string>();
 	private readonly foldingControls = new WeakMap<HTMLElement, FreeformFolding>();
+	private readonly excerptMetadata = new ExcerptMetadata();
+	private renderAbort = new AbortController();
+	private readonly exportAborts = new Set<AbortController>();
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -208,13 +211,27 @@ export class FreeformView extends BasesView {
 		});
 		this.registerEvent(
 			this.app.vault.on('modify', (file) => {
-					if (this.fileContentsEditsInProgress.delete(file.path)) {
-						return;
-					}
 				const isDisplayedFile = this.data.data.some(
 					(entry) => entry.file.path === file.path,
 				);
+				if (isDisplayedFile && file instanceof TFile) {
+					this.excerptMetadata.modified(file);
+				}
+					if (this.fileContentsEditsInProgress.delete(file.path)) {
+						return;
+					}
 				if (file.path === this.getTemplatePath() || isDisplayedFile) {
+					this.requestRender();
+				}
+			}),
+		);
+		this.registerEvent(
+			this.app.metadataCache.on('changed', (file, content, cache) => {
+				if (
+					this.excerptMetadata.isRequested(file) &&
+					this.data.data.some((entry) => entry.file.path === file.path)
+				) {
+					this.excerptMetadata.changed(file, content, cache);
 					this.requestRender();
 				}
 			}),
@@ -223,6 +240,7 @@ export class FreeformView extends BasesView {
 	}
 
 	onDataUpdated(): void {
+		this.excerptMetadata.retain(this.data.data.map((entry) => entry.file));
 		if (
 			this.getBooleanOption(ADD_FILE_CONTENTS_OPTION_KEY, false) &&
 			!this.fileContentsUpdateInProgress
@@ -246,11 +264,18 @@ export class FreeformView extends BasesView {
 
 	onunload(): void {
 		this.renderGeneration++;
+		this.excerptMetadata.retain([]);
+		this.renderAbort.abort();
+		for (const controller of this.exportAborts) {
+			controller.abort();
+		}
 		this.clearRenderComponent();
 		this.rootEl.remove();
 	}
 
 	private requestRender(): void {
+		this.renderAbort.abort();
+		this.renderAbort = new AbortController();
 		const generation = ++this.renderGeneration;
 
 		void this.render(generation).catch((error: unknown) => {
@@ -259,7 +284,9 @@ export class FreeformView extends BasesView {
 			}
 
 			console.error('MarkBase could not render the Freeform view.', error);
-			this.showMessage('Unable to render this Freeform view.');
+			this.showMessage(
+				error instanceof Error ? error.message : 'Unable to render this Freeform view.',
+			);
 		});
 	}
 
@@ -386,21 +413,11 @@ export class FreeformView extends BasesView {
 		trimStart: boolean,
 		trimEnd: boolean,
 	): Promise<void> {
-		const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(
-					entry,
-					transformOptions.trimWhitespace,
-				)
-			: null;
+		const resolver = this.createPropertyResolver(entry, transformOptions.trimWhitespace);
+		const values = await resolver.resolveOrdered(getTemplateProperties(template));
 		const markdown = transformExportMarkdown(
-			interpolateTemplate(template, (propertyId) => {
-				if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
-					return fileContents ?? '';
-				}
-
-				const value = entry.getValue(propertyId);
-				return expandEscapedNewlines(value?.toString() ?? '');
-			}),
+			interpolateTemplate(template, (propertyId) =>
+				values.find((value) => value.propertyId === propertyId)?.value?.toString() ?? ''),
 			transformOptions,
 			{ trimStart, trimEnd },
 		);
@@ -432,21 +449,10 @@ export class FreeformView extends BasesView {
 		trimStart: boolean,
 		trimEnd: boolean,
 	): Promise<void> {
-		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(
-					entry,
-					transformOptions.trimWhitespace,
-				)
-			: null;
+		const resolver = this.createPropertyResolver(entry, transformOptions.trimWhitespace);
 		const markdown = transformExportMarkdown(
 			buildOrderedEntryMarkdown(
-				propertyOrder.map((propertyId) => ({
-					propertyId,
-					value:
-						propertyId === FILE_CONTENTS_PROPERTY_ID
-							? fileContents
-							: entry.getValue(propertyId),
-				})),
+				await resolver.resolveOrdered(propertyOrder),
 				entry.file.path,
 				this.getLineSeparator(),
 			),
@@ -480,6 +486,7 @@ export class FreeformView extends BasesView {
 				transformOptions,
 				trimStart,
 				trimEnd,
+				resolver,
 			);
 			this.addFoldingControls(entryEl, contentEl);
 			return;
@@ -522,9 +529,9 @@ export class FreeformView extends BasesView {
 		transformOptions: ExportTransformOptions,
 		trimStart: boolean,
 		trimEnd: boolean,
+		resolver: EntryPropertyResolver,
 	): Promise<void> {
-		const fileContent = await this.app.vault.cachedRead(entry.file);
-		const body = extractMarkdownBody(fileContent);
+		const { content: fileContent, body } = await resolver.readSource();
 		const bodyBoundary = getMarkdownBodyBoundaryWhitespace(body);
 		const bodyBoundaryWhitespace = {
 			leading:
@@ -549,7 +556,7 @@ export class FreeformView extends BasesView {
 
 			const markdown = transformExportMarkdown(
 				buildOrderedEntryMarkdown(
-					[{ propertyId, value: entry.getValue(propertyId) }],
+					await resolver.resolveOrdered([propertyId]),
 					entry.file.path,
 					this.getLineSeparator(),
 				),
@@ -786,15 +793,14 @@ export class FreeformView extends BasesView {
 		);
 	}
 
-	private async readFileContent(
+	private createPropertyResolver(
 		entry: BasesEntry,
 		trimWhitespace: boolean,
-	): Promise<string> {
-		const content = await this.app.vault.cachedRead(entry.file);
-		const markdown = extractMarkdownBody(content);
-		return trimWhitespace
-			? trimFileBoundaryWhitespace(markdown)
-			: markdown;
+		signal: AbortSignal = this.renderAbort.signal,
+	): EntryPropertyResolver {
+		return new EntryPropertyResolver(
+			this.app, entry, this.excerptMetadata, signal, trimWhitespace,
+		);
 	}
 
 	private getExportTransformOptions(): ExportTransformOptions {
@@ -1024,7 +1030,18 @@ export class FreeformView extends BasesView {
 	}
 
 	private async exportMarkdown(options: ExportOptions): Promise<void> {
+		const controller = new AbortController();
+		this.exportAborts.add(controller);
+		try {
+			await this.exportMarkdownWithSignal(options, controller.signal);
+		} finally {
+			this.exportAborts.delete(controller);
+		}
+	}
+
+	private async exportMarkdownWithSignal(options: ExportOptions, signal: AbortSignal): Promise<void> {
 		const template = await this.readTemplate();
+		this.checkExportCancelled(signal);
 		const propertyOrder = template === null ? this.getPropertyOrder() : [];
 		if (template === null && propertyOrder.length === 0) {
 			throw new Error(
@@ -1060,13 +1077,16 @@ export class FreeformView extends BasesView {
 					template,
 					propertyOrder,
 					options,
+					signal,
 				),
 			});
 		}
 
+		this.checkExportCancelled(signal);
 		await this.ensureExportFolder(options.folder);
 		const exportedFiles: TFile[] = [];
 		for (const output of outputs) {
+			this.checkExportCancelled(signal);
 			const existingFile = this.app.vault.getAbstractFileByPath(output.path);
 			if (existingFile instanceof TFolder) {
 				throw new Error(`The export path "${output.path}" is a folder.`);
@@ -1093,6 +1113,12 @@ export class FreeformView extends BasesView {
 		);
 	}
 
+	private checkExportCancelled(signal: AbortSignal): void {
+		if (signal.aborted) {
+			throw new Error('Export was cancelled.');
+		}
+	}
+
 	private async readTemplate(): Promise<string | null> {
 		const templatePath = this.getTemplatePath();
 		if (!templatePath) {
@@ -1115,6 +1141,26 @@ export class FreeformView extends BasesView {
 		template: string | null,
 		propertyOrder: BasesPropertyId[],
 		options: ExportOptions,
+		signal?: AbortSignal,
+	): Promise<string> {
+		if (signal) {
+			return this.buildExportMarkdownWithSignal(entries, template, propertyOrder, options, signal);
+		}
+		const controller = new AbortController();
+		this.exportAborts.add(controller);
+		try {
+			return await this.buildExportMarkdownWithSignal(entries, template, propertyOrder, options, controller.signal);
+		} finally {
+			this.exportAborts.delete(controller);
+		}
+	}
+
+	private async buildExportMarkdownWithSignal(
+		entries: BasesEntry[],
+		template: string | null,
+		propertyOrder: BasesPropertyId[],
+		options: ExportOptions,
+		signal: AbortSignal,
 	): Promise<string> {
 		const parts: string[] = [];
 		const separator = transformExportMarkdown(
@@ -1135,6 +1181,7 @@ export class FreeformView extends BasesView {
 					propertyOrder,
 					untrimmedOptions,
 					options.trimWhitespace,
+					signal,
 				),
 			);
 		}
@@ -1149,42 +1196,21 @@ export class FreeformView extends BasesView {
 		propertyOrder: BasesPropertyId[],
 		options: ExportOptions,
 		trimFileWhitespace: boolean,
+		signal: AbortSignal = this.renderAbort.signal,
 	): Promise<string> {
+		const resolver = this.createPropertyResolver(entry, trimFileWhitespace, signal);
 		if (template !== null) {
-			const fileContents = template.includes(FILE_CONTENTS_PROPERTY_ID)
-				? await this.readFileContent(
-						entry,
-						trimFileWhitespace,
-					)
-				: null;
+			const values = await resolver.resolveOrdered(getTemplateProperties(template));
 			return transformExportMarkdown(
-				interpolateTemplate(template, (propertyId) => {
-					if (propertyId === FILE_CONTENTS_PROPERTY_ID) {
-						return fileContents ?? '';
-					}
-					return expandEscapedNewlines(
-						entry.getValue(propertyId)?.toString() ?? '',
-					);
-				}),
+				interpolateTemplate(template, (propertyId) =>
+					values.find((value) => value.propertyId === propertyId)?.value?.toString() ?? ''),
 				options,
 			);
 		}
 
-		const fileContents = propertyOrder.includes(FILE_CONTENTS_PROPERTY_ID)
-			? await this.readFileContent(
-					entry,
-					trimFileWhitespace,
-				)
-			: null;
 		return transformExportMarkdown(
 			buildOrderedEntryMarkdown(
-				propertyOrder.map((propertyId) => ({
-					propertyId,
-					value:
-						propertyId === FILE_CONTENTS_PROPERTY_ID
-							? fileContents
-							: entry.getValue(propertyId),
-				})),
+				await resolver.resolveOrdered(propertyOrder),
 				entry.file.path,
 				this.getLineSeparator(),
 			),

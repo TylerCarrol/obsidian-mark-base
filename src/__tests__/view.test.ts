@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { QueryController } from 'obsidian';
+import { Component } from 'obsidian';
 import { FreeformFolding } from '../freeform/folding';
 import {
 	FreeformView,
@@ -54,7 +54,7 @@ describe('Freeform view grouping', () => {
 		}
 
 		function createView(headingFolding = true, noteFolding = true) {
-			const controller = {
+			const controller = Object.assign(new Component(), {
 				app: {},
 				config: {
 					get: (key: string) => {
@@ -68,7 +68,7 @@ describe('Freeform view grouping', () => {
 					},
 				},
 				data: {},
-			} as QueryController;
+			});
 			const parent = Object.assign(document.createElement('div'), {
 				createDiv: () => document.createElement('div'),
 			});
@@ -251,7 +251,7 @@ describe('Freeform view grouping', () => {
 		const parent = Object.assign(document.createElement('div'), {
 			createDiv: () => root,
 		});
-		const controller = {
+		const controller = Object.assign(new Component(), {
 			app: {},
 			config: {
 				get: (key: string) => fixtures.settings.get(key),
@@ -263,7 +263,7 @@ describe('Freeform view grouping', () => {
 				groupedData: fixtures.groups,
 				properties: ['note.title'],
 			},
-		} as QueryController;
+		});
 		const view = new FreeformView(controller, parent);
 		const createOutputPreview = vi.fn<FreeformView['createOutputPreview']>(
 			() => document.createElement('div'),

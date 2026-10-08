@@ -18,6 +18,8 @@ document.
 - Follow internal links and select rendered text for copying.
 - Add a multiline Markdown separator between results, or leave it empty.
 - Place each note's Markdown body anywhere in the property order.
+- Show body excerpts through formulas: line ranges, tagged lines or blocks,
+   and regex matches.
 - Edit note bodies with cursor-sensitive Markdown formatting and wikilink
    suggestions.
 - Optionally override the property layout with a reusable Markdown template.
@@ -113,6 +115,63 @@ In template mode, place `{{file.contents}}` where the note body should appear.
 `file.contents` is provided by the Freeform view, not the Bases formula engine.
 Obsidian currently does not expose an API for plugins to add file properties to
 formula evaluation, so it cannot be referenced from a Base formula.
+
+### Show partial file contents with formulas
+
+Create a Base formula that returns a MarkBase instruction list. Then select
+that formula in the Base properties menu.
+
+| Selection | Formula expression |
+| --- | --- |
+| Body lines 10 through 20 | `["markbase.contents", "lines", 10, 20]` |
+| Body line 10 through the end | `["markbase.contents", "lines", 10]` |
+| Lines with `#todo` or its nested tags | `["markbase.contents", "tag", "#todo", "lines"]` |
+| Complete blocks with those tags | `["markbase.contents", "tag", "#todo", "blocks"]` |
+| Lines with unchecked tasks | `["markbase.contents", "regex", "^[-*] \\[ \\]", "lines"]` |
+| Blocks that contain "decision", case-insensitively | `["markbase.contents", "regex", "decision", "blocks", "i"]` |
+| Tag argument from a note property | `["markbase.contents", "tag", note.excerptTag, "blocks"]` |
+
+MarkBase resolves the instruction into Markdown in Freeform previews and
+exports. Templates also support these formulas through placeholders such as
+`{{formula.Excerpt}}`.
+
+**Line ranges:** Line 1 starts immediately after YAML frontmatter. Blank lines
+count, and both endpoints are included. A final newline does not add an extra
+empty line. A range beyond the body returns the available lines or empty text.
+Invalid, non-positive, fractional, or reversed ranges produce an error.
+
+**Tags:** The leading `#` is optional. Matches ignore case and include nested
+tags. For example, `#todo` matches `#todo/work`, but not `#todoish`.
+Only inline tags that Obsidian recognizes select content. Frontmatter tags
+and tag-like text inside code fences do not select content.
+
+**Output modes:** Tag and regex selectors require `lines` or `blocks`.
+The `blocks` mode uses Obsidian's root-level Markdown blocks, including whole
+paragraphs, lists, callouts, tables, and code fences. A heading selects only
+its heading block, not the entire heading section.
+
+**Regex:** Each line or block is a separate match target. Block patterns can
+match across lines. The optional flags are `i`, `m`, `s`, and `u`.
+Patterns are strings without surrounding `/` delimiters. Escape backslashes
+for the Bases string, as the task example shows. Regex selectors can match
+literal text inside code fences.
+
+Source order and indentation remain unchanged within each excerpt. Separated
+lines use one newline. Separated blocks use a blank line. No matches produce
+empty text. Obsidian metadata must be available for tag and block selection.
+If metadata is not current, the view shows an error and updates after indexing.
+
+Regex selection uses a local worker with a 1,000 ms timeout per instruction.
+Invalid patterns, timeouts, and unavailable workers produce explicit errors.
+An export stops before it writes files if an instruction fails.
+
+**Limits:** Excerpts are read-only, even if full-body editing is enabled.
+These formulas return instructions, not native text values. Other Bases
+layouts show the instruction list. Bases cannot filter, sort, group, or
+calculate on the resolved excerpt. Native expressions can supply selector
+arguments, but operations such as `.join()` do not operate on excerpt text.
+Each formula must return one complete instruction list. Cross-note selection
+and selector chaining are not supported.
 
 Each result is rendered relative to its source note, so relative links and
 embeds resolve in that note's context. Template edits are reflected

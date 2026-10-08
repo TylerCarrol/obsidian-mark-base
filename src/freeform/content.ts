@@ -6,6 +6,7 @@ export const FILE_CONTENTS_PROPERTY_ID: BasesPropertyId = 'file.contents';
 export interface OrderedEntryProperty {
 	propertyId: BasesPropertyId;
 	value: unknown;
+	preserveEscapedNewlines?: boolean;
 }
 
 export interface InternalLinkTarget {
@@ -91,8 +92,9 @@ export function buildOrderedEntryMarkdown(
 	lineSeparator: string,
 ): string {
 	return properties
-		.map(({ propertyId, value }) => {
-			const markdown = expandEscapedNewlines(value?.toString() ?? '');
+		.map(({ propertyId, value, preserveEscapedNewlines }) => {
+			const text = value?.toString() ?? '';
+			const markdown = preserveEscapedNewlines ? text : expandEscapedNewlines(text);
 			if (!markdown) {
 				return '';
 			}

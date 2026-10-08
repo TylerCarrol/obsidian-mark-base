@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added formula-generated file excerpts for body line ranges, inline tags
+  (including nested tags), and regex matches in line or Markdown-block mode.
+- Excerpt formulas work in ordered previews, templates, and exports. Excerpts
+  remain read-only beside the full-body editor.
+- Regex selection uses a local worker with a 1,000 ms timeout.
 - Added configurable heading-section and complete-note folding controls to
   Freeform views.
 
