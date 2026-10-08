@@ -44,8 +44,11 @@ document.
 4. Open **Configure view → File separator** to set the Markdown placed between
    results. Enter `\n` for a new line, such as `---\n\n---`, or clear the
    option to join results without a separator.
-5. Open the Base properties menu, add `file.contents`, and drag it to where the
+5. Enable **Configure view → Add file contents (one-shot button)** to add
+   `file.contents` to the property order. The option turns itself off after
+   it runs. Then drag `file.contents` in the Base properties menu to where the
    note's Markdown body should render. YAML frontmatter is omitted.
+  - Please note that due to technical limitations it is not currently possible to add from the "properties" menu.
 6. To edit note bodies in place, enable **Configure view → Enable file contents
    editing**, then select a rendered note body. Markdown markers appear for
    the formatting at the caret. Type `[[` to search for notes and insert a
