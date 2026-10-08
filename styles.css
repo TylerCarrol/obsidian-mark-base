@@ -96,7 +96,6 @@
 .mark-base-live-preview__embed,
 .mark-base-live-preview__tag {
 	color: var(--link-color);
-	text-decoration-line: var(--link-decoration);
 }
 
 .mark-base-live-preview__comment {
