@@ -147,14 +147,103 @@
 	content: attr(data-mark-base-marker) " ";
 }
 
-.mark-base-freeform__entry > :first-child,
+.mark-base-freeform__entry-content > :first-child,
 .mark-base-freeform__separator > :first-child {
 	margin-block-start: 0;
 }
 
-.mark-base-freeform__entry > :last-child,
+.mark-base-freeform__entry-content > :last-child,
 .mark-base-freeform__separator > :last-child {
 	margin-block-end: 0;
+}
+
+.mark-base-freeform__entry {
+	position: relative;
+}
+
+.mark-base-freeform__entry--heading-folding,
+.mark-base-freeform__entry--note-folding {
+	padding-inline-start: 24px;
+	min-height: 1lh;
+}
+
+.mark-base-freeform__entry--heading-folding.mark-base-freeform__entry--note-folding {
+	padding-inline-start: 48px;
+}
+
+.mark-base-freeform__foldable-heading {
+	position: relative;
+}
+
+.mark-base-freeform button.mark-base-freeform__fold-button {
+	position: absolute;
+	top: max(0px, calc((1lh - 24px) / 2));
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: var(--radius-s);
+	background: transparent;
+	box-shadow: none;
+	color: var(--text-faint);
+	opacity: 0;
+	cursor: pointer;
+}
+
+.mark-base-freeform__note-fold-button {
+	inset-inline-start: 0;
+}
+
+.mark-base-freeform__heading-fold-button {
+	inset-inline-start: -24px;
+}
+
+.mark-base-freeform__fold-button svg {
+	width: 12px;
+	height: 12px;
+	stroke-width: 2;
+	transform: rotate(90deg);
+}
+
+.mark-base-freeform__fold-button.is-collapsed svg {
+	transform: rotate(0deg);
+}
+
+.mark-base-freeform__entry:hover > .mark-base-freeform__note-fold-button,
+.mark-base-freeform__entry:focus-within > .mark-base-freeform__note-fold-button,
+.mark-base-freeform__foldable-heading:hover > .mark-base-freeform__heading-fold-button,
+.mark-base-freeform__foldable-heading:focus-within > .mark-base-freeform__heading-fold-button,
+.mark-base-freeform button.mark-base-freeform__fold-button:is(.is-collapsed, :focus-visible) {
+	opacity: 1;
+}
+
+.mark-base-freeform button.mark-base-freeform__fold-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.mark-base-freeform button.mark-base-freeform__fold-button:focus-visible {
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: -2px;
+}
+
+.mark-base-freeform__folded-note-label {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.mark-base-freeform [hidden] {
+	display: none !important;
+}
+
+@media (hover: none) {
+	.mark-base-freeform button.mark-base-freeform__fold-button {
+		opacity: 1;
+	}
 }
 
 .mark-base-freeform__boundary-newline + * {

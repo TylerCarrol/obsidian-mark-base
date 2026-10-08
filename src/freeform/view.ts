@@ -40,12 +40,15 @@ import {
 } from './export';
 import { ExportModal } from './export-modal';
 import { createLivePreviewEditor } from './live-preview-editor';
+import { FreeformFolding } from './folding';
 import { interpolateTemplate } from './template';
 
 export const FREEFORM_VIEW_TYPE = 'freeform';
 export const TEMPLATE_OPTION_KEY = 'template';
 export const ADD_FILE_CONTENTS_OPTION_KEY = 'addFileContents';
 export const ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY = 'enableFileContentsEditing';
+export const ENABLE_HEADING_FOLDING_OPTION_KEY = 'enableHeadingFolding';
+export const ENABLE_NOTE_FOLDING_OPTION_KEY = 'enableNoteFolding';
 export const FILE_SEPARATOR_OPTION_KEY = 'separator';
 export const LINE_SEPARATOR_OPTION_KEY = 'lineSeparator';
 export const SHOW_EXPORT_BUTTON_OPTION_KEY = 'showExportButton';
@@ -75,6 +78,8 @@ export const DEFAULT_GROUP_BY_CREATES_SEPARATE_OUTPUT_FILES = false;
 export const DEFAULT_OPEN_FILE_AFTER_EXPORT = false;
 export const DEFAULT_ADD_FILE_CONTENTS = false;
 export const DEFAULT_ENABLE_FILE_CONTENTS_EDITING = false;
+export const DEFAULT_ENABLE_HEADING_FOLDING = true;
+export const DEFAULT_ENABLE_NOTE_FOLDING = true;
 
 function stringifyGroupValue(value: unknown): string {
 	if (value === undefined || value === null) {
@@ -177,6 +182,7 @@ export class FreeformView extends BasesView {
 	private renderGeneration = 0;
 	private fileContentsUpdateInProgress = false;
 	private readonly fileContentsEditsInProgress = new Set<string>();
+	private readonly foldingControls = new WeakMap<HTMLElement, FreeformFolding>();
 
 	constructor(controller: QueryController, parentEl: HTMLElement) {
 		super(controller);
@@ -402,15 +408,19 @@ export class FreeformView extends BasesView {
 			cls: 'mark-base-freeform__entry',
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
-		this.renderLeadingNewlines(entryEl, markdown);
+		const contentEl = entryEl.createDiv({
+			cls: 'mark-base-freeform__entry-content',
+		});
+		this.renderLeadingNewlines(contentEl, markdown);
 
 		await MarkdownRenderer.render(
 			this.app,
 			markdown,
-			entryEl,
+			contentEl,
 			entry.file.path,
 			renderComponent,
 		);
+		this.addFoldingControls(entryEl, contentEl);
 	}
 
 	private async renderOrderedEntry(
@@ -457,33 +467,51 @@ export class FreeformView extends BasesView {
 			],
 			attr: { [SOURCE_PATH_ATTRIBUTE]: entry.file.path },
 		});
+		const contentEl = entryEl.createDiv({
+			cls: 'mark-base-freeform__entry-content',
+		});
 
 		if (editingFileContents) {
 			await this.renderEditableOrderedEntry(
 				propertyOrder,
 				entry,
-				entryEl,
+				contentEl,
 				renderComponent,
 				transformOptions,
 				trimStart,
 				trimEnd,
 			);
+			this.addFoldingControls(entryEl, contentEl);
 			return;
 		}
 
-		this.renderLeadingNewlines(entryEl, markdown);
+		this.renderLeadingNewlines(contentEl, markdown);
 
 		if (!markdown) {
+			this.addFoldingControls(entryEl, contentEl);
 			return;
 		}
 
 		await MarkdownRenderer.render(
 			this.app,
 			markdown,
-			entryEl,
+			contentEl,
 			entry.file.path,
 			renderComponent,
 		);
+		this.addFoldingControls(entryEl, contentEl);
+	}
+
+	private addFoldingControls(
+		entryEl: HTMLElement,
+		contentEl: HTMLElement,
+	): void {
+		this.foldingControls.set(entryEl, new FreeformFolding(
+			entryEl,
+			contentEl,
+			this.getBooleanOption(ENABLE_HEADING_FOLDING_OPTION_KEY, DEFAULT_ENABLE_HEADING_FOLDING),
+			this.getBooleanOption(ENABLE_NOTE_FOLDING_OPTION_KEY, DEFAULT_ENABLE_NOTE_FOLDING),
+		));
 	}
 
 	private async renderEditableOrderedEntry(
@@ -599,6 +627,10 @@ export class FreeformView extends BasesView {
 			entry.file.path,
 			renderComponent,
 		);
+		const noteEl = bodyEl.closest<HTMLElement>('.mark-base-freeform__entry');
+		if (noteEl) {
+			this.foldingControls.get(noteEl)?.refreshHeadings();
+		}
 		if (bodyEl.dataset.markBaseEditableBody === 'true') {
 			return;
 		}
@@ -610,11 +642,17 @@ export class FreeformView extends BasesView {
 			if ((event.target as HTMLElement).closest('a')) {
 				return;
 			}
+			if ((event.target as HTMLElement).closest('.mark-base-freeform__fold-button')) {
+				return;
+			}
 
 			bodyEl.empty();
 			const editorEl = bodyEl.createDiv({
 				cls: 'mark-base-freeform__contents-source',
 			});
+			if (noteEl) {
+				this.foldingControls.get(noteEl)?.refreshHeadings();
+			}
 			let hasUnsavedChanges = false;
 			const editor = createLivePreviewEditor({
 				app: this.app,
