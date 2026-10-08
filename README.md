@@ -59,6 +59,11 @@ newlines in multiline formula values remain visible. `file.name` is rendered as
 a link to its note. Changes to matching notes, formulas, property order, and
 view options update the view automatically.
 
+Grouped Bases show group headers when **Show export button** is off.
+When **Show export button** is on, group headers appear only if
+**Group by creates separate output files** is on.
+This setting still controls whether exports create one file or separate files.
+
 ### Use a template override
 
 For a fixed custom layout, create a Markdown file and add placeholders using
