@@ -3,9 +3,13 @@ import {
 	ALLOW_OVERRIDES_OPTION_KEY,
 	ADD_FILE_CONTENTS_OPTION_KEY,
 	ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY,
+	ENABLE_HEADING_FOLDING_OPTION_KEY,
+	ENABLE_NOTE_FOLDING_OPTION_KEY,
 	DEFAULT_ALLOW_OVERRIDES,
 	DEFAULT_ADD_FILE_CONTENTS,
 	DEFAULT_ENABLE_FILE_CONTENTS_EDITING,
+	DEFAULT_ENABLE_HEADING_FOLDING,
+	DEFAULT_ENABLE_NOTE_FOLDING,
 	DEFAULT_FILE_SEPARATOR,
 	DEFAULT_LINE_SEPARATOR,
 	DEFAULT_EXPORT_FILE,
@@ -68,6 +72,24 @@ const FREEFORM_VIEW_OPTIONS: BasesAllOptions[] = [
 		key: ENABLE_FILE_CONTENTS_EDITING_OPTION_KEY,
 		displayName: 'Enable file contents editing',
 		default: DEFAULT_ENABLE_FILE_CONTENTS_EDITING,
+	},
+	{
+		type: 'group',
+		displayName: 'Folding',
+		items: [
+			{
+				type: 'toggle',
+				key: ENABLE_HEADING_FOLDING_OPTION_KEY,
+				displayName: 'Enable heading folding',
+				default: DEFAULT_ENABLE_HEADING_FOLDING,
+			},
+			{
+				type: 'toggle',
+				key: ENABLE_NOTE_FOLDING_OPTION_KEY,
+				displayName: 'Enable note folding',
+				default: DEFAULT_ENABLE_NOTE_FOLDING,
+			},
+		],
 	},
 	{
 		type: 'group',

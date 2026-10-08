@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added configurable heading-section and complete-note folding controls to
+  Freeform views.
+
+### Changed
+
+- Replaced folding buttons with small gutter chevrons that appear on hover or
+  keyboard focus. Folded notes show a compact filename label.
+- Heading folding now includes editable note previews.
+
 ### Fixed
 
 - Freeform views now show groups when the export button is off, regardless of

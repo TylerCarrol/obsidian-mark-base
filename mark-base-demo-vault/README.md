@@ -33,6 +33,10 @@ scene notes in sequence.
   between property blocks.
 - Change **Configure view → File separator**; use `\n` to add another line.
 - Clear **Configure view → File separator** to remove the horizontal rule.
+- Under **Configure view → Folding**, enable the heading and note fold controls.
+- Select a heading's gutter chevron to fold its section.
+- Select a note's outer gutter chevron to fold the complete note.
+  The folded note shows its filename and an expand chevron.
 - Under **Configure view → Export**, choose a default vault folder and enter a
   default file name for future exports.
 - Toggle the export cleanup options to preview the resulting Markdown. When a

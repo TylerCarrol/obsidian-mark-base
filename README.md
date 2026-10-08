@@ -53,6 +53,15 @@ document.
 7. Under **Configure view → Export**, configure the default vault folder and
    file name for future exports. **Default folder** provides suggestions from
    the folders that already exist in the vault.
+8. Under **Configure view → Folding**, enable or disable controls for folding
+   Markdown heading sections and complete notes.
+   Select the gutter chevron beside a heading to fold its section.
+   Select the outer gutter chevron beside a note to fold the complete note.
+
+Fold chevrons appear on hover or keyboard focus. Folded chevrons stay visible.
+On touch devices, all fold chevrons stay visible.
+A folded note shows its filename so you can find it and expand it.
+Heading folding also works in editable note previews.
 
 Each selected value is rendered as Markdown, in property-menu order. Single
 newlines in multiline formula values remain visible. `file.name` is rendered as

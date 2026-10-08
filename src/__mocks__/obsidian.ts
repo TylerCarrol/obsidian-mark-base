@@ -25,3 +25,8 @@ export class TFile {}
 export class TFolder {}
 export class Modal {}
 export class Setting {}
+export function setIcon(element: HTMLElement, icon: string): void {
+	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('data-icon', icon);
+	element.append(svg);
+}
