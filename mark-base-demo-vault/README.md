@@ -39,8 +39,10 @@ scene notes in sequence.
   Base is grouped and **Show export button** is on, enable
   **Group by creates separate output files** to preview each group as a distinct
   output. When **Show export button** is off, the view always shows groups.
-- Add `file.contents` in the Base properties menu and move it to where each
-  note's body should render.
+- Enable **Configure view → Add file contents (one-shot button)** to add
+  `file.contents` to the property order, then move it in the Base properties
+  menu to where each note's body should render.
+  - Please note that due to technical limitations it is not currently possible to add from the "properties" menu.
 - Select `Templates/Person profile.md` under **Configure view → Template
   override** to try a fixed layout, then edit that file to see it update.
 
