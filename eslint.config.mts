@@ -58,10 +58,20 @@ export default defineConfig(
 	// Test and mock files are not Obsidian plugin code — disable plugin-specific
 	// rules that only apply to the production plugin source.
 	{
+		files: ['src/__tests__/**'],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: './tsconfig.tests.json',
+			},
+		},
+	},
+	{
 		files: ['src/__tests__/**', 'src/__mocks__/**'],
 		rules: {
 			'obsidianmd/prefer-create-el': 'off',
 			'obsidianmd/ui/sentence-case': 'off',
+			'obsidianmd/no-nodejs-modules': 'off',
 		},
 	},
 );

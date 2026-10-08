@@ -1,0 +1,38 @@
+filters:
+  and:
+    - note.demoExcerpt == true
+formulas:
+  Lines: '["markbase.contents", "lines", 5, 6]'
+  Tagged_lines: '["markbase.contents", "tag", "#todo", "lines"]'
+  Tagged_blocks: '["markbase.contents", "tag", note.excerptTag, "blocks"]'
+  Open_tasks: '["markbase.contents", "regex", "^[-*] \\[ \\]", "lines"]'
+  Decisions: '["markbase.contents", "regex", "decision", "blocks", "i"]'
+views:
+  - type: freeform
+    name: Tagged blocks
+    order:
+      - file.name
+      - formula.Tagged_blocks
+  - type: freeform
+    name: Tagged lines
+    order:
+      - file.name
+      - formula.Tagged_lines
+  - type: freeform
+    name: Body lines 5 to 6
+    order:
+      - file.name
+      - formula.Lines
+  - type: freeform
+    name: Open tasks
+    order:
+      - file.name
+      - formula.Open_tasks
+  - type: freeform
+    name: Decisions
+    order:
+      - file.name
+      - formula.Decisions
+  - type: freeform
+    name: Excerpt template
+    template: Templates/Excerpt preview.md

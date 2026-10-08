@@ -22,6 +22,27 @@ The **Profiles** view renders selected formulas from the sample notes in
 The **Manuscript** Base renders chapter headings and the Markdown bodies of its
 scene notes in sequence.
 
+## Try partial contents formulas
+
+Open **Excerpts.base** to select content from **Excerpt example.md**.
+The Base includes these Freeform views:
+
+- **Tagged blocks** shows complete blocks with `#todo` or its nested tags.
+- **Tagged lines** shows only the lines with those tags.
+- **Body lines 5 to 6** shows an inclusive, body-relative line range.
+- **Open tasks** uses a regex to select unchecked task lines.
+- **Decisions** uses a case-insensitive regex to select complete blocks.
+- **Excerpt template** references excerpt formulas from a Markdown template.
+
+In **Excerpt example.md**, change `excerptTag` from `todo` to `todo/work`.
+The **Tagged blocks** view then shows only blocks with that nested tag.
+
+Inline tag selection ignores the code fence and the `#todoish` prefix collision.
+The task regex also matches literal task text inside the code fence.
+Block mode keeps the full list, callout, table, or paragraph that contains a match.
+These excerpts are read-only. Other Bases layouts show the formula instruction,
+not its resolved contents.
+
 ## Explore the example
 
 - Reorder formulas in the Base properties menu and see the rendered values move
